@@ -1,0 +1,6 @@
+{
+  "name": "OVRStudio — 2D Art, Graphic Design, Unity Games & AR/VR",
+  "description": "A creative studio making joyful 2D art, graphic design, Unity indie games, and mixed reality AR/VR worlds.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
