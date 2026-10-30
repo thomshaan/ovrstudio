@@ -30,9 +30,9 @@ function New-SecretValue([int]$Bytes = 32) {
 
 function Set-WorkerSecret([string]$Name, [string]$Path, [string]$WorkerName = "") {
   $value = (Get-Content -Path $Path -Raw).Trim()
-  $args = @("secret", "put", $Name)
-  if ($WorkerName) { $args += @("--name", $WorkerName) }
-  $value | & npx --yes wrangler@latest @args
+  $wranglerArgs = @("secret", "put", $Name)
+  if ($WorkerName) { $wranglerArgs += @("--name", $WorkerName) }
+  $value | & npx --yes wrangler@latest @wranglerArgs
   if ($LASTEXITCODE -ne 0) { throw "Could not configure Worker secret $Name on $WorkerName." }
 }
 
