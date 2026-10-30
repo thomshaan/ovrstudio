@@ -12,6 +12,22 @@ This Worker accepts authenticated media uploads and stores the binary files in R
 
 The public URL is for file delivery only. Do not use it as the upload endpoint.
 
+5. In the bucket's **Settings → CORS Policy**, add a rule allowing browser downloads from your website. For the current GitHub Pages origin, use:
+
+```json
+[
+  {
+    "AllowedOrigins": ["https://thomshaan.github.io", "http://localhost:5173"],
+    "AllowedMethods": ["GET", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag", "Content-Length", "Content-Type"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+If your site uses a custom domain, add that origin here as well. This is needed for the browser-based 3D model loader to fetch OBJ files from R2.
+
 ## 2. Deploy the Worker
 
 From the repository root, with Node.js installed:
