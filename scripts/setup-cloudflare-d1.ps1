@@ -28,10 +28,12 @@ function New-SecretValue([int]$Bytes = 32) {
   return [Convert]::ToBase64String($buffer).TrimEnd('=').Replace('+','-').Replace('/','_')
 }
 
-function Set-WorkerSecret([string]$Name, [string]$Path) {
+function Set-WorkerSecret([string]$Name, [string]$Path, [string]$WorkerName = "") {
   $value = (Get-Content -Path $Path -Raw).Trim()
-  $value | & npx --yes wrangler@latest secret put $Name
-  if ($LASTEXITCODE -ne 0) { throw "Could not configure Worker secret $Name." }
+  $args = @("secret", "put", $Name)
+  if ($WorkerName) { $args += @("--name", $WorkerName) }
+  $value | & npx --yes wrangler@latest @args
+  if ($LASTEXITCODE -ne 0) { throw "Could not configure Worker secret $Name on $WorkerName." }
 }
 
 if (-not (Get-Command bun -ErrorAction SilentlyContinue)) {
@@ -103,6 +105,8 @@ if (-not (Test-Path $jwtPath)) {
 }
 Set-WorkerSecret -Name "CMS_ADMIN_PASSWORD" -Path $passwordPath
 Set-WorkerSecret -Name "CMS_JWT_SECRET" -Path $jwtPath
+# Share the signed CMS session with the existing media Worker so uploads need no second token prompt.
+Set-WorkerSecret -Name "CMS_JWT_SECRET" -Path $jwtPath -WorkerName "ovrstudio-media-upload"
 
 if (-not $SkipDeploy) {
   Write-Host "`n[5/6] Installing dependencies and building the site..." -ForegroundColor Cyan
@@ -116,9 +120,11 @@ if (-not $SkipDeploy) {
 
   Write-Host "`n[6/6] Deploying the Worker and static website..." -ForegroundColor Cyan
   Invoke-Wrangler -Arguments @("deploy")
+  Write-Host "`nDeploying the updated R2 upload Worker with CMS-session support..." -ForegroundColor Cyan
+  Invoke-Wrangler -Arguments @("deploy", "--config", "cloudflare/worker/wrangler.toml")
 } else {
   Write-Host "`n[5/6] Deployment skipped by request." -ForegroundColor Yellow
-  Write-Host "Run 'bun install; bun run build; npx wrangler deploy' when ready."
+  Write-Host "Run 'bun install; bun run build; npx wrangler deploy' and 'npx wrangler deploy --config cloudflare/worker/wrangler.toml' when ready."
 }
 
 Write-Host "`nOVRStudio D1 CMS infrastructure is configured." -ForegroundColor Green
