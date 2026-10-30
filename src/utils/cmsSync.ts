@@ -32,6 +32,18 @@ export async function loginToCms(password: string): Promise<string> {
   setCmsToken(result.token);
   return result.token;
 }
+export async function verifyCmsSession(): Promise<boolean> {
+  if (!getCmsToken()) return false;
+  try {
+    await request<{ valid: boolean }>('/api/cms/session', {
+      headers: { Authorization: `Bearer ${getCmsToken()}` },
+    });
+    return true;
+  } catch {
+    clearCmsToken();
+    return false;
+  }
+}
 export async function fetchCmsSnapshot(): Promise<{ initialized: boolean; content: CmsSnapshot }> {
   return request<{ initialized: boolean; content: CmsSnapshot }>('/api/cms/bootstrap');
 }
