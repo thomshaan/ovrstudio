@@ -9,7 +9,7 @@ import { CMSMediaUploader } from './CMSMediaUploader';
 import { Model3DViewer } from './Model3DViewer';
 import { PRESET_AUDIO_TRACKS, uploadFileToR2 } from '../utils/mediaUpload';
 import { resolveAssetUrl } from '../utils/assets';
-import { clearCmsToken, getCmsToken, loginToCms } from '../utils/cmsSync';
+import { clearCmsToken, getCmsToken, loginToCms, verifyCmsSession } from '../utils/cmsSync';
 import {
   Lock,
   Plus,
@@ -118,6 +118,15 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4500);
   };
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let active = true;
+    void verifyCmsSession().then((valid) => {
+      if (active && !valid) setIsAuthenticated(false);
+    });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     const handleSyncError = (event: Event) => {
