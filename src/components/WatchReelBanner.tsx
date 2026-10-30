@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Play, Volume2, VolumeX, Sparkles, X } from 'lucide-react';
 import { sound } from '../utils/audio';
+import { resolveAssetUrl } from '../utils/assets';
 
 interface WatchReelBannerProps {
   onExploreProjects: () => void;
@@ -74,7 +75,7 @@ export const WatchReelBanner: React.FC<WatchReelBannerProps> = ({ onExploreProje
             {/* Video preview area */}
             <div className="relative w-full aspect-16/9 bg-black overflow-hidden flex items-center justify-center">
               <img
-                src={thumbnailImage || "/src/assets/images/ovr_art_2d_1793175838956.jpg"}
+                src={resolveAssetUrl(thumbnailImage || 'assets/images/ovr_art_2d_1793175838956.jpg')}
                 alt="Studio Reel"
                 className="w-full h-full object-cover"
               />

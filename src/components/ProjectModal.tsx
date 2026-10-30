@@ -4,6 +4,7 @@ import { X, Check, ArrowRight, Box, Film, Image as ImageIcon, ChevronLeft, Chevr
 import { ProjectMediaPreview } from './ProjectMediaPreview';
 import { Model3DViewer } from './Model3DViewer';
 import { sound } from '../utils/audio';
+import { resolveAssetUrl } from '../utils/assets';
 
 interface ProjectModalProps {
   project: Project | null;
@@ -157,7 +158,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
               <div className="space-y-4">
                 <div className="relative aspect-video max-h-[480px] w-full rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 shadow-md flex items-center justify-center">
                   <img
-                    src={allImages[selectedGalleryIdx] || project.image}
+                    src={resolveAssetUrl(allImages[selectedGalleryIdx] || project.image)}
                     alt={`${project.title} slide ${selectedGalleryIdx + 1}`}
                     className="w-full h-full object-contain bg-black/40"
                   />
@@ -208,7 +209,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
                           : 'border-slate-200 hover:border-slate-400 opacity-70 hover:opacity-100'
                       }`}
                     >
-                      <img src={imgUrl} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                      <img src={resolveAssetUrl(imgUrl)} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>

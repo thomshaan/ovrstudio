@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Project, ProjectCategory } from '../types';
 import { X, Plus, Edit2, Trash2, Video, Image as ImageIcon, Save, CheckCircle2, Lock, Unlock, Eye, EyeOff, Key, Copy } from 'lucide-react';
 import { sound } from '../utils/audio';
+import { resolveAssetUrl } from '../utils/assets';
 
 interface AdminPortalModalProps {
   isOpen: boolean;
@@ -518,7 +519,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                     >
                       <div className="flex items-center gap-4">
                         <img
-                          src={proj.image}
+                          src={resolveAssetUrl(proj.image)}
                           alt={proj.title}
                           className="w-16 h-12 object-cover rounded-xl bg-slate-100"
                         />

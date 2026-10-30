@@ -8,6 +8,7 @@ import { sound } from '../utils/audio';
 import { CMSMediaUploader } from './CMSMediaUploader';
 import { Model3DViewer } from './Model3DViewer';
 import { PRESET_AUDIO_TRACKS } from '../utils/mediaUpload';
+import { resolveAssetUrl } from '../utils/assets';
 import {
   Lock,
   Plus,
@@ -61,12 +62,14 @@ interface AdminCMSDashboardProps {
 const MASTER_PASSWORD = 'ovr2026';
 
 const PRESET_IMAGES = [
-  { label: '3D Character Art', url: '/src/assets/images/ovr_art_2d_1793175838956.jpg' },
-  { label: 'Unity Indie Game', url: '/src/assets/images/ovr_game_unity_1793175840681.jpg' },
-  { label: 'Mixed Reality VR/AR', url: '/src/assets/images/ovr_vr_spatial_1793175840681.jpg' },
-  { label: 'Graphic Design', url: '/src/assets/images/ovr_design_graphic_1793175840681.jpg' },
-  { label: 'Studio Life', url: '/src/assets/images/ovr_story_studio_life_1793175840681.jpg' },
-  { label: 'Team Ocean Reel', url: '/src/assets/images/ovr_team_ocean_reel_1793175840681.jpg' },
+  { label: '3D Character Art', url: 'assets/images/ovr_art_2d_1793175838956.jpg' },
+  { label: 'Unity Indie Game', url: 'assets/images/ovr_game_unity_1793175840681.jpg' },
+  { label: 'Mixed Reality VR/AR', url: 'assets/images/ovr_vr_experience_1793175841126.jpg' },
+  { label: 'Graphic Design', url: 'assets/images/ovr_design_branding_1793175840098.jpg' },
+  { label: 'Studio Life', url: 'assets/images/ovr_story_studio_life_1793177350433.jpg' },
+  { label: 'Team Founder', url: 'assets/images/ovr_team_founder_1793177349401.jpg' },
+  { label: 'Team Lead Artist', url: 'assets/images/ovr_team_lead_artist_1793177349612.jpg' },
+  { label: 'Team Tech Artist', url: 'assets/images/ovr_team_tech_artist_1793177350136.jpg' },
 ];
 
 export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
@@ -479,7 +482,7 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                   >
                     <div className="relative aspect-video bg-slate-900 overflow-hidden">
                       <img
-                        src={proj.image}
+                        src={resolveAssetUrl(proj.image)}
                         alt={proj.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -597,7 +600,7 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                       <div className="flex items-center gap-3 min-w-0">
                         {collab.avatarUrl ? (
                           <img
-                            src={collab.avatarUrl}
+                            src={resolveAssetUrl(collab.avatarUrl)}
                             alt={collab.clientName}
                             className="w-10 h-10 rounded-full object-cover border border-white/20 shrink-0"
                           />
@@ -770,7 +773,7 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                   >
                     <div className="relative aspect-4/3 bg-slate-900 overflow-hidden">
                       <img
-                        src={m.avatar}
+                        src={resolveAssetUrl(m.avatar)}
                         alt={m.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -1500,7 +1503,7 @@ const ProjectEditorModal: React.FC<ProjectEditorModalProps> = ({
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-2">
                 {galleryImages.map((imgUrl, i) => (
                   <div key={i} className="relative aspect-video rounded-xl overflow-hidden border border-white/20 group/thumb bg-slate-900">
-                    <img src={imgUrl} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
+                    <img src={resolveAssetUrl(imgUrl)} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => setGalleryImages(galleryImages.filter((_, idx) => idx !== i))}

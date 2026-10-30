@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Upload, X, Film, Image as ImageIcon, Music, Check, AlertCircle } from 'lucide-react';
 import { readFileAsDataUrl } from '../utils/mediaUpload';
 import { sound } from '../utils/audio';
+import { resolveAssetUrl } from '../utils/assets';
 
 interface CMSMediaUploaderProps {
   label: string;
@@ -180,7 +181,7 @@ export const CMSMediaUploader: React.FC<CMSMediaUploaderProps> = ({
           {mediaType === 'image' && (
             <div className="relative w-full h-32 bg-black/40 rounded-xl overflow-hidden border border-white/10">
               <img
-                src={currentUrl}
+                src={resolveAssetUrl(currentUrl)}
                 alt="Upload Preview"
                 className="w-full h-full object-cover"
               />

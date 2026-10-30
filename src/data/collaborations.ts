@@ -8,7 +8,7 @@ export const DEFAULT_COLLABORATIONS: CollaborationItem[] = [
     projectOrCompany: 'Coral Reef Games',
     quote: 'OVRStudio made our dream ocean game feel cozy, playful, and alive. They listen carefully, work fast, and bring pure artistic passion to every single frame.',
     badge: 'Game Co-Production',
-    avatarUrl: '/src/assets/images/ovr_story_studio_life_1793175840681.jpg',
+    avatarUrl: 'assets/images/ovr_story_studio_life_1793177350433.jpg',
     year: '2026',
   },
   {
@@ -18,7 +18,7 @@ export const DEFAULT_COLLABORATIONS: CollaborationItem[] = [
     projectOrCompany: 'Ocean Horizon Institute',
     quote: 'The interactive 3D marine simulations they developed for our student exhibits captivated tens of thousands of visitors. Their understanding of spatial depth and tactile feedback is unmatched.',
     badge: 'Spatial AR & VR',
-    avatarUrl: '/src/assets/images/ovr_vr_spatial_1793175840681.jpg',
+    avatarUrl: 'assets/images/ovr_vr_experience_1793175841126.jpg',
     year: '2025',
   },
   {
@@ -28,7 +28,7 @@ export const DEFAULT_COLLABORATIONS: CollaborationItem[] = [
     projectOrCompany: 'Starlight Indie Collective',
     quote: 'Working alongside OVRStudio on character visual identities was seamless. Their stylized 3D sculpts and fluid color palettes transformed our indie universe into something magical.',
     badge: '3D Art & Characters',
-    avatarUrl: '/src/assets/images/ovr_art_2d_1793175838956.jpg',
+    avatarUrl: 'assets/images/ovr_art_2d_1793175838956.jpg',
     year: '2025',
   },
 ];

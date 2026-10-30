@@ -2,6 +2,7 @@ import React from 'react';
 import { TeamMember } from '../types';
 import { Heart, ArrowRight } from 'lucide-react';
 import { sound } from '../utils/audio';
+import { resolveAssetUrl } from '../utils/assets';
 
 interface StudioTeamProps {
   team: TeamMember[];
@@ -54,12 +55,11 @@ export const StudioTeam: React.FC<StudioTeamProps> = ({ team, onOpenContact, sto
           <div className="lg:col-span-6">
             <div className="relative aspect-square max-w-md mx-auto rounded-[48px] overflow-hidden shadow-2xl border-4 border-white bg-sky-50">
               <img
-                src={storyImage || "/src/assets/images/ovr_story_studio_life_1793175840681.jpg"}
+                src={resolveAssetUrl(storyImage || 'assets/images/ovr_story_studio_life_1793177350433.jpg')}
                 alt="OVRStudio Team Collaborating"
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  // Fallback to story image
-                  (e.target as HTMLImageElement).src = '/src/assets/images/ovr_art_2d_1793175838956.jpg';
+                  (e.target as HTMLImageElement).src = resolveAssetUrl('assets/images/ovr_art_2d_1793175838956.jpg');
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0b1d3a]/70 via-transparent to-transparent pointer-events-none" />
@@ -98,7 +98,7 @@ export const StudioTeam: React.FC<StudioTeamProps> = ({ team, onOpenContact, sto
                   {/* Photo Avatar */}
                   <div className="relative w-28 h-28 rounded-2xl overflow-hidden mb-6 shadow-md border-2 border-white bg-slate-200">
                     <img
-                      src={member.avatar}
+                      src={resolveAssetUrl(member.avatar)}
                       alt={member.name}
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

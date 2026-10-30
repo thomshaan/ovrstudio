@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowRight, Heart, Smile, Sparkles, MessageCircle, Star } from 'lucide-react';
 import { sound } from '../utils/audio';
+import { resolveAssetUrl } from '../utils/assets';
 import { CollaborationItem } from '../types';
 
 interface StudioManifestoProps {
@@ -121,7 +122,7 @@ export const StudioManifesto: React.FC<StudioManifestoProps> = ({
                 <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
                   {collab.avatarUrl ? (
                     <img
-                      src={collab.avatarUrl}
+                      src={resolveAssetUrl(collab.avatarUrl)}
                       alt={collab.clientName}
                       className="w-11 h-11 rounded-full object-cover border-2 border-orange-500/30 shrink-0"
                     />

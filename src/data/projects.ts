@@ -23,11 +23,11 @@ export const PROJECTS: Project[] = [
       author: 'Maya Lin',
       role: 'Game Producer, Coral Reef Games'
     },
-    image: '/src/assets/images/ovr_game_unity_1793175840681.jpg',
+    image: 'assets/images/ovr_game_unity_1793175840681.jpg',
     galleryImages: [
-      '/src/assets/images/ovr_game_unity_1793175840681.jpg',
-      '/src/assets/images/ovr_art_2d_1793175838956.jpg',
-      '/src/assets/images/ovr_vr_spatial_1793175840681.jpg',
+      'assets/images/ovr_game_unity_1793175840681.jpg',
+      'assets/images/ovr_art_2d_1793175838956.jpg',
+      'assets/images/ovr_vr_experience_1793175841126.jpg',
     ],
     videoDuration: '0:34',
     featured: true,
@@ -54,11 +54,11 @@ export const PROJECTS: Project[] = [
       author: 'Julian Thorne',
       role: 'Creative Director, Blue Horizon'
     },
-    image: '/src/assets/images/ovr_art_2d_1793175838956.jpg',
+    image: 'assets/images/ovr_art_2d_1793175838956.jpg',
     galleryImages: [
-      '/src/assets/images/ovr_art_2d_1793175838956.jpg',
-      '/src/assets/images/ovr_design_graphic_1793175840681.jpg',
-      '/src/assets/images/ovr_story_studio_life_1793175840681.jpg',
+      'assets/images/ovr_art_2d_1793175838956.jpg',
+      'assets/images/ovr_design_branding_1793175840098.jpg',
+      'assets/images/ovr_story_studio_life_1793177350433.jpg',
     ],
     model3D: {
       name: 'Subsea Diver & Relic (3D Model)',
@@ -90,7 +90,7 @@ export const PROJECTS: Project[] = [
       author: 'Dr. Camille Fontaine',
       role: 'Director of Exhibitions'
     },
-    image: '/src/assets/images/ovr_vr_experience_1793175841126.jpg',
+    image: 'assets/images/ovr_vr_experience_1793175841126.jpg',
     videoDuration: '0:42',
     featured: true,
   },
@@ -116,7 +116,7 @@ export const PROJECTS: Project[] = [
       author: 'Sarah Jenkins',
       role: 'Head of Communications, Maritime Museum'
     },
-    image: '/src/assets/images/ovr_design_branding_1793175840098.jpg',
+    image: 'assets/images/ovr_design_branding_1793175840098.jpg',
     videoDuration: '0:18',
     featured: false,
   },
@@ -137,7 +137,7 @@ export const PROJECTS: Project[] = [
       { label: 'Frame Stability', value: 'Solid 60 FPS' },
       { label: 'Client Feedback', value: '100% Approval' }
     ],
-    image: '/src/assets/images/ovr_project_lumina_1793175040059.jpg',
+    image: 'assets/images/ovr_project_lumina_1793175040059.jpg',
     videoDuration: '0:30',
     featured: false,
   },
@@ -158,7 +158,7 @@ export const PROJECTS: Project[] = [
       { label: 'App Store Rating', value: '4.9 / 5.0' },
       { label: 'Featured in', value: 'Creative Review' }
     ],
-    image: '/src/assets/images/ovr_project_aether_1793175040559.jpg',
+    image: 'assets/images/ovr_project_aether_1793175040559.jpg',
     videoDuration: '0:22',
     featured: false,
   }

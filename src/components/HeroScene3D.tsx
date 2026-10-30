@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { sound } from '../utils/audio';
+import { resolveAssetUrl } from '../utils/assets';
 import { Play, ChevronDown, Sparkles, Waves, Gamepad2, ArrowRight, Heart } from 'lucide-react';
 
 interface HeroScene3DProps {
@@ -64,6 +65,11 @@ export const HeroScene3D: React.FC<HeroScene3DProps> = ({
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.25;
+
+    renderer.domElement.style.borderRadius = 'inherit';
+    renderer.domElement.style.display = 'block';
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
 
     container.appendChild(renderer.domElement);
 
@@ -271,67 +277,77 @@ export const HeroScene3D: React.FC<HeroScene3DProps> = ({
   return (
     <section id="hero" className="relative w-full bg-white pt-32 pb-8 overflow-hidden">
       {/* Top Arched Viewport Window with clean isolation */}
+      {/* Top Arched Viewport Window with clean isolation and rounded corners */}
       <div className="max-w-7xl mx-auto px-4 sm:px-8 relative z-10">
-        <div className="relative w-full h-[400px] sm:h-[500px] lg:h-[540px] rounded-[32px] sm:rounded-[48px] overflow-hidden shadow-2xl bg-white border-2 border-slate-100">
-          
+        <div
+          className="relative w-full h-[400px] sm:h-[480px] lg:h-[540px] rounded-[28px] sm:rounded-[44px] lg:rounded-[48px] overflow-hidden shadow-2xl bg-[#032042] border-2 border-white/20 transform-gpu isolate"
+          style={{
+            WebkitMaskImage: '-webkit-radial-gradient(white, black)',
+            maskImage: 'radial-gradient(white, black)',
+            WebkitTransform: 'translateZ(0)',
+            transform: 'translateZ(0)',
+            borderRadius: 'inherit',
+          }}
+        >
           {/* 3D WebGL Canvas */}
           <div
             ref={mountRef}
-            className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing z-0"
+            className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing z-0 rounded-[28px] sm:rounded-[44px] lg:rounded-[48px] overflow-hidden"
+            style={{ borderRadius: 'inherit', WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
             aria-label="Interactive 3D Ocean Experience"
           />
 
           {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#021833]/90 via-[#021833]/30 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#021833]/90 via-[#021833]/30 to-transparent pointer-events-none rounded-[inherit]" />
 
           {/* Typography inside the viewport */}
-          <div className="absolute inset-0 z-10 flex flex-col justify-between p-6 sm:p-12 pointer-events-none">
-            {/* Top Tag */}
+          <div className="absolute inset-0 z-10 flex flex-col justify-between p-5 sm:p-10 lg:p-12 pointer-events-none">
+            {/* Top Tag & 3D Pause Toggle */}
             <div className="flex items-center justify-between">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-md text-white text-xs sm:text-sm font-semibold tracking-wide border border-white/30">
-                <Waves className="w-4 h-4 text-white" />
-                <span>OVRStudio · Interactive Creative Studio</span>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/20 backdrop-blur-md text-white text-xs sm:text-sm font-semibold tracking-wide border border-white/30">
+                <Waves className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white shrink-0" />
+                <span className="truncate max-w-[210px] sm:max-w-none">OVRStudio · Interactive Creative Studio</span>
               </div>
 
-              <div className="pointer-events-auto hidden sm:flex items-center gap-2">
+              <div className="pointer-events-auto flex items-center gap-2">
                 <button
                   onClick={() => {
                     sound.playTick();
                     setAutoRotate(!autoRotate);
                   }}
-                  className="group relative overflow-hidden px-4 py-2 rounded-full bg-[#0b1d3a]/80 hover:bg-[#0b1d3a] text-white text-xs sm:text-sm font-medium border border-white/20 backdrop-blur-md transition-all duration-200 active:scale-95 hover:scale-[1.03] cursor-pointer before:absolute before:inset-0 before:-translate-x-full hover:before:translate-x-full before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:transition-transform before:duration-700"
+                  className="group relative overflow-hidden px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-[#0b1d3a]/80 hover:bg-[#0b1d3a] text-white text-xs sm:text-sm font-medium border border-white/20 backdrop-blur-md transition-all duration-200 active:scale-95 hover:scale-[1.03] cursor-pointer"
                 >
                   {autoRotate ? 'Pause 3D' : 'Spin 3D'}
                 </button>
               </div>
             </div>
 
-            {/* Bottom Headline & Orange CTA Button */}
+            {/* Bottom Headline & Action Buttons */}
             <div className="max-w-xl pointer-events-auto">
-              <h1 className="text-3xl sm:text-5xl font-display font-bold text-white tracking-tight leading-tight mb-5 drop-shadow-md">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-display font-bold text-white tracking-tight leading-snug sm:leading-tight mb-4 drop-shadow-md">
                 We make playful games, 3D art, and worlds you can step inside.
               </h1>
               
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
                 {/* Important Orange CTA Button with cool interactive sweep & glow */}
                 <button
                   onClick={() => {
                     sound.playChime(640, 0.12);
                     onExploreProjects();
                   }}
-                  className="group relative overflow-hidden px-7 py-3.5 bg-orange-500 hover:bg-orange-600 text-white rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 hover:scale-[1.03] shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 flex items-center gap-2.5 cursor-pointer before:absolute before:inset-0 before:-translate-x-full hover:before:translate-x-full before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:transition-transform before:duration-700"
+                  className="group relative overflow-hidden px-6 py-3 sm:px-7 sm:py-3.5 bg-orange-500 hover:bg-orange-600 text-white rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 hover:scale-[1.03] shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 flex items-center gap-2 cursor-pointer before:absolute before:inset-0 before:-translate-x-full hover:before:translate-x-full before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:transition-transform before:duration-700"
                 >
                   <Play className="w-4 h-4 text-white fill-current group-hover:scale-110 transition-transform" />
                   <span>Explore Our Works</span>
                 </button>
 
-                {/* Our Story Button (changed from Admin CMS) */}
+                {/* Our Story Button */}
                 <button
                   onClick={() => {
                     sound.playTick();
                     onDiveDeeper();
                   }}
-                  className="group relative overflow-hidden px-6 py-3.5 bg-white text-[#0b1d3a] hover:text-orange-600 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 hover:scale-[1.03] shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer before:absolute before:inset-0 before:-translate-x-full hover:before:translate-x-full before:bg-gradient-to-r before:from-transparent before:via-black/5 before:to-transparent before:transition-transform before:duration-700"
+                  className="group relative overflow-hidden px-5 py-3 sm:px-6 sm:py-3.5 bg-white text-[#0b1d3a] hover:text-orange-600 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 hover:scale-[1.03] shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer before:absolute before:inset-0 before:-translate-x-full hover:before:translate-x-full before:bg-gradient-to-r before:from-transparent before:via-black/5 before:to-transparent before:transition-transform before:duration-700"
                 >
                   <Heart className="w-4 h-4 text-[#0b1d3a] group-hover:text-orange-600 transition-colors" />
                   <span>Our Story</span>
@@ -404,10 +420,11 @@ export const HeroScene3D: React.FC<HeroScene3DProps> = ({
                   {/* Tablet Screen Surface */}
                   <div className="relative w-full h-[calc(100%-14px)] rounded-xl bg-gradient-to-br from-[#0284c7] via-[#0369a1] to-[#0b1d3a] p-4 flex flex-col justify-between overflow-hidden shadow-inner group">
                     <img
-                      src={tabletImage || "/src/assets/images/ovr_game_unity_1793175840681.jpg"}
+                      src={resolveAssetUrl(tabletImage || "assets/images/ovr_game_unity_1793175840681.jpg")}
                       alt="Unity Game Gameplay"
                       className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
                     />
+
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0b1d3a]/80 via-transparent to-black/30 pointer-events-none" />
 
                     {/* Tablet Top Info */}

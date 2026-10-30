@@ -35,9 +35,9 @@ const DEFAULT_BG_AUDIO: BackgroundAudioConfig = {
 };
 
 const DEFAULT_SITE_VISUALS: SiteVisualsConfig = {
-  tabletImage: '/src/assets/images/ovr_game_unity_1793175840681.jpg',
-  watchReelThumbnail: '/src/assets/images/ovr_art_2d_1793175838956.jpg',
-  storyImage: '/src/assets/images/ovr_story_studio_life_1793175840681.jpg',
+  tabletImage: 'assets/images/ovr_game_unity_1793175840681.jpg',
+  watchReelThumbnail: 'assets/images/ovr_art_2d_1793175838956.jpg',
+  storyImage: 'assets/images/ovr_story_studio_life_1793177350433.jpg',
 };
 
 const DEFAULT_CUSTOM_3D: Custom3DModelConfig = {

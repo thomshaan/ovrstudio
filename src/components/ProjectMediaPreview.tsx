@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize2, Film } from 'lucide-react';
 import { sound } from '../utils/audio';
+import { resolveAssetUrl } from '../utils/assets';
 
 interface ProjectMediaPreviewProps {
   image: string;
@@ -64,14 +65,16 @@ export const ProjectMediaPreview: React.FC<ProjectMediaPreviewProps> = ({
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
+  const resolvedImage = resolveAssetUrl(image);
+
   useEffect(() => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.src = image;
+    img.src = resolvedImage;
     img.onload = () => {
       imgRef.current = img;
     };
-  }, [image]);
+  }, [resolvedImage]);
 
   // Procedural animated preview fallback if no real videoPreviewUrl provided
   useEffect(() => {
@@ -192,7 +195,7 @@ export const ProjectMediaPreview: React.FC<ProjectMediaPreviewProps> = ({
     }`}>
       {/* 1. Base Image */}
       <img
-        src={image}
+        src={resolvedImage}
         alt={title}
         referrerPolicy="no-referrer"
         className={`w-full h-full object-cover transition-opacity duration-300 ${
