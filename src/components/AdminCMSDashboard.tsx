@@ -7,7 +7,7 @@ import { DEFAULT_COLLABORATIONS } from '../data/collaborations';
 import { sound } from '../utils/audio';
 import { CMSMediaUploader } from './CMSMediaUploader';
 import { Model3DViewer } from './Model3DViewer';
-import { PRESET_AUDIO_TRACKS } from '../utils/mediaUpload';
+import { PRESET_AUDIO_TRACKS, uploadFileToR2 } from '../utils/mediaUpload';
 import { resolveAssetUrl } from '../utils/assets';
 import {
   Lock,
@@ -1077,20 +1077,18 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                 
                 <div className="space-y-3 text-sm text-slate-300 leading-relaxed">
                   <p>
-                    <strong>1. Local Browser Storage (Instant &amp; Zero Config):</strong><br />
-                    When you upload an image, short video clip, or audio file in this CMS, it is encoded and saved right in your browser via <code className="bg-white/10 text-orange-300 px-1.5 py-0.5 rounded font-mono">localStorage</code> as Data URLs. It persists across reloads and device testing without requiring any external cloud setup.
+                    <strong>1. Cloudflare R2 Media Storage:</strong><br />
+                    Uploaded images, gallery artwork, videos, audio, and 3D model files are sent to your Cloudflare Worker and stored in R2. The CMS saves only the public R2 URL, keeping large media files out of browser localStorage.
                   </p>
 
                   <p>
-                    <strong>2. Deploying with Free / Scalable Cloud Storage:</strong><br />
-                    For hosting large 4K video reels and production asset libraries across multiple users, you can use any of these high-performance options:
+                    <strong>2. Upload security:</strong><br />
+                    Uploads require the private Worker token and are validated server-side. Keep the token private; it is requested when you upload and retained only for the current browser tab session.
                   </p>
                   
                   <ul className="list-disc list-inside space-y-1.5 pl-2 text-xs text-slate-300">
-                    <li><strong className="text-white">Cloudflare R2:</strong> 10GB free tier, $0 egress fees, instant global CDN delivery.</li>
-                    <li><strong className="text-white">Vercel Blob:</strong> 1-click storage integration with Vercel frontend deployments.</li>
-                    <li><strong className="text-white">Firebase Storage:</strong> 5GB free tier, integrated with Google Cloud infrastructure.</li>
-                    <li><strong className="text-white">GitHub Repository (<code className="text-orange-300">public/assets/</code>):</strong> Put video files into the <code className="text-orange-300">public/assets/</code> directory and commit to GitHub; they will deploy automatically with your site!</li>
+                    <li><strong className="text-white">Public delivery:</strong> Media URLs use your configured Cloudflare R2 public domain.</li>
+                    <li><strong className="text-white">Cross-device use:</strong> Public URLs can be loaded by every visitor; CMS metadata still remains in the browser's localStorage.</li>
                   </ul>
                 </div>
 
@@ -1485,12 +1483,11 @@ const ProjectEditorModal: React.FC<ProjectEditorModalProps> = ({
                     if (!file) return;
                     try {
                       sound.playTick();
-                      const { readFileAsDataUrl } = await import('../utils/mediaUpload');
-                      const dataUrl = await readFileAsDataUrl(file);
-                      setGalleryImages([...galleryImages, dataUrl]);
+                      const uploaded = await uploadFileToR2(file);
+                      setGalleryImages([...galleryImages, uploaded.url]);
                       sound.playChime(750, 0.15);
                     } catch (err) {
-                      alert(err instanceof Error ? err.message : 'Error reading image');
+                      alert(err instanceof Error ? err.message : 'Error uploading image');
                     }
                     e.target.value = '';
                   }}
@@ -1580,12 +1577,12 @@ const ProjectEditorModal: React.FC<ProjectEditorModalProps> = ({
                         if (!file) return;
                         try {
                           sound.playTick();
-                          const text = await file.text();
-                          setModel3DData(text);
+                          const uploaded = await uploadFileToR2(file);
+                          setModel3DData(uploaded.url);
                           setModel3DName(file.name);
                           sound.playChime(750, 0.15);
                         } catch {
-                          alert('Failed to read 3D file');
+                          alert('Failed to upload 3D file');
                         }
                         e.target.value = '';
                       }}
