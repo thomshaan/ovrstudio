@@ -84,17 +84,26 @@ export const Model3DViewer: React.FC<Model3DViewerProps> = ({
 
     // Load initial model (preset or custom)
     if (customObjContent) {
-      parse3DModel(customObjContent, customModelName || 'model.obj')
-        .then((res) => {
+      const loadCustomModel = async () => {
+        try {
+          const modelContent = /^https?:\/\//i.test(customObjContent)
+            ? await fetch(customObjContent).then((response) => {
+                if (!response.ok) throw new Error('Could not download the saved 3D model from R2.');
+                return response.text();
+              })
+            : customObjContent;
+          const res = await parse3DModel(modelContent, customModelName || 'model.obj');
           modelGroup.clear();
           modelGroup.add(res.object);
           setStats({ vertices: res.vertexCount, triangles: res.triangleCount });
-        })
-        .catch(() => {
+        } catch (error) {
+          setLoadingError(error instanceof Error ? error.message : 'Could not load the saved 3D model.');
           const fallback = createPreset3DModel('marine-drone');
           modelGroup.clear();
           modelGroup.add(fallback);
-        });
+        }
+      };
+      void loadCustomModel();
     } else {
       const preset = createPreset3DModel(initialPreset);
       modelGroup.add(preset);
