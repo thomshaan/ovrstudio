@@ -42,10 +42,10 @@ if (-not (Get-Command bun -ErrorAction SilentlyContinue)) {
 if (-not (Test-Path $configPath)) { throw "Could not find wrangler.jsonc at $configPath" }
 if (-not (Test-Path $migrationPath)) { throw "Could not find the D1 schema migration at $migrationPath" }
 
-Write-Host "`n[1/6] Checking your existing Cloudflare login..." -ForegroundColor Cyan
+Write-Host "`n[1/7] Checking your existing Cloudflare login..." -ForegroundColor Cyan
 Invoke-Wrangler -Arguments @("whoami")
 
-Write-Host "`n[2/6] Finding or creating the D1 database..." -ForegroundColor Cyan
+Write-Host "`n[2/7] Finding or creating the D1 database..." -ForegroundColor Cyan
 $databaseId = $null
 $listOutput = & npx --yes wrangler@latest d1 list --json 2>$null
 if ($LASTEXITCODE -eq 0) {
@@ -91,7 +91,7 @@ if ($existing.Count -gt 0) {
 $config.d1_databases = $bindings
 $config | ConvertTo-Json -Depth 30 | Set-Content -Path $configPath -Encoding utf8
 
-Write-Host "`n[3/6] Applying the D1 schema..." -ForegroundColor Cyan
+Write-Host "`n[3/7] Applying the D1 schema..." -ForegroundColor Cyan
 Invoke-Wrangler -Arguments @("d1", "execute", $DatabaseName, "--remote", "--file", $migrationPath, "--yes")
 
 Write-Host "`n[4/7] Saving the generated D1 binding to the current Git branch..." -ForegroundColor Cyan
@@ -100,7 +100,7 @@ if (Get-Command git -ErrorAction SilentlyContinue) {
   try {
     $branch = (& git branch --show-current).Trim()
     if ($branch -and $branch -notin @("main", "master")) {
-      & git diff --quiet -- wrangler.jsonc
+      & git diff HEAD --quiet -- wrangler.jsonc
       if ($LASTEXITCODE -ne 0) {
         & git add -- wrangler.jsonc
         & git commit --only wrangler.jsonc -m "Configure OVRStudio D1 database binding"
@@ -145,7 +145,7 @@ if (-not $SkipDeploy) {
   Write-Host "`nDeploying the updated R2 upload Worker with CMS-session support..." -ForegroundColor Cyan
   Invoke-Wrangler -Arguments @("deploy", "--config", "cloudflare/worker/wrangler.toml")
 } else {
-  Write-Host "`n[5/6] Deployment skipped by request." -ForegroundColor Yellow
+  Write-Host "`n[5/7] Deployment skipped by request." -ForegroundColor Yellow
   Write-Host "Run 'bun install; bun run build; npx wrangler deploy' and 'npx wrangler deploy --config cloudflare/worker/wrangler.toml' when ready."
 }
 
