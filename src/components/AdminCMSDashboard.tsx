@@ -1106,6 +1106,8 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                         team,
                         collaborations,
                         bgAudioConfig,
+                        siteVisuals,
+                        custom3DModel,
                         exportedAt: new Date().toISOString(),
                       };
                       const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -1142,6 +1144,8 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                             if (data.team) onUpdateTeam(data.team);
                             if (data.collaborations) onUpdateCollaborations(data.collaborations);
                             if (data.bgAudioConfig) onUpdateBgAudioConfig(data.bgAudioConfig);
+                            if (data.siteVisuals) onUpdateSiteVisuals(data.siteVisuals);
+                            if (data.custom3DModel) onUpdateCustom3DModel(data.custom3DModel);
                             showToast('Content restored from backup successfully!');
                           } catch {
                             alert('Invalid JSON file format.');
