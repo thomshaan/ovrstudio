@@ -63,6 +63,10 @@ async function api(request:Request,env:Env):Promise<Response>{
   if(typeof body?.password!=='string'||body.password!==env.CMS_ADMIN_PASSWORD)return json({error:'Incorrect studio password.'},401,headers);
   return json({token:await signToken(env.CMS_JWT_SECRET),expiresIn:TOKEN_TTL_SECONDS},200,headers);
  }
+ if(path==='/api/cms/session'&&request.method==='GET'){
+  if(!await verifyToken(request,env.CMS_JWT_SECRET||''))return json({valid:false,error:'CMS session expired.'},401,headers);
+  return json({valid:true},200,headers);
+ }
  if(path==='/api/cms/bootstrap'&&request.method==='GET'){
   try{return json(await getSnapshot(env),200,headers);}catch{return json({error:'CMS database is not ready. Run the D1 setup.'},503,headers);}
  }
