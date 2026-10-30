@@ -89,7 +89,8 @@ if ($existing.Count -gt 0) {
   $bindings += [pscustomobject]@{ binding = $BindingName; database_name = $DatabaseName; database_id = $databaseId }
 }
 $config.d1_databases = $bindings
-$config | ConvertTo-Json -Depth 30 | Set-Content -Path $configPath -Encoding utf8
+$configJson = $config | ConvertTo-Json -Depth 30
+[System.IO.File]::WriteAllText($configPath, $configJson, [System.Text.UTF8Encoding]::new($false))
 
 Write-Host "`n[3/7] Applying the D1 schema..." -ForegroundColor Cyan
 Invoke-Wrangler -Arguments @("d1", "execute", $DatabaseName, "--remote", "--file", $migrationPath, "--yes")
