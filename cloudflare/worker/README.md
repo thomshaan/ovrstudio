@@ -36,7 +36,7 @@ From the repository root, with Node.js installed:
 npx wrangler login
 npx wrangler r2 bucket list
 # Edit cloudflare/worker/wrangler.toml and replace REPLACE_WITH_YOUR_R2_BUCKET_NAME
-npx wrangler secret put UPLOAD_TOKEN
+npx wrangler secret put UPLOAD_TOKEN --config cloudflare/worker/wrangler.toml
 npx wrangler deploy --config cloudflare/worker/wrangler.toml
 ```
 
