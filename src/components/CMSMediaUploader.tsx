@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Upload, X, Film, Image as ImageIcon, Music, Check, AlertCircle } from 'lucide-react';
-import { readFileAsDataUrl } from '../utils/mediaUpload';
+import { uploadFileToR2 } from '../utils/mediaUpload';
 import { sound } from '../utils/audio';
 import { resolveAssetUrl } from '../utils/assets';
 
@@ -41,12 +41,12 @@ export const CMSMediaUploader: React.FC<CMSMediaUploaderProps> = ({
 
     try {
       sound.playTick();
-      const dataUrl = await readFileAsDataUrl(file);
-      onMediaSelect(dataUrl);
-      setCustomUrlInput(dataUrl);
+      const uploaded = await uploadFileToR2(file);
+      onMediaSelect(uploaded.url);
+      setCustomUrlInput(uploaded.url);
       sound.playChime(780, 0.15);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error reading media file';
+      const msg = err instanceof Error ? err.message : 'Error uploading media file';
       setErrorMessage(msg);
     } finally {
       setIsUploading(false);
@@ -111,7 +111,7 @@ export const CMSMediaUploader: React.FC<CMSMediaUploaderProps> = ({
           className="px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-slate-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 active:scale-95 cursor-pointer shadow-md"
         >
           <Upload className="w-3.5 h-3.5" />
-          <span>{isUploading ? 'Reading File...' : `Upload ${mediaType.toUpperCase()} File`}</span>
+          <span>{isUploading ? 'Uploading to R2...' : `Upload ${mediaType.toUpperCase()} File`}</span>
         </button>
 
         <span className="text-[11px] text-slate-400">or enter link:</span>
