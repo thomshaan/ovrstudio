@@ -31,10 +31,10 @@ export async function loginToCms(password: string): Promise<string> {
   return result.token;
 }
 export async function fetchCmsSnapshot(): Promise<{ initialized: boolean; content: CmsSnapshot }> {
-  return request('/api/cms/bootstrap');
+  return request<{ initialized: boolean; content: CmsSnapshot }>('/api/cms/bootstrap');
 }
 export async function migrateCmsSnapshot(content: Record<CmsKey, unknown>): Promise<{ initialized: boolean; content: CmsSnapshot }> {
-  return request('/api/cms/migrate', {
+  return request<{ initialized: boolean; content: CmsSnapshot }>('/api/cms/migrate', {
     method: 'POST',
     headers: { Authorization: `Bearer ${getCmsToken()}` },
     body: JSON.stringify({ content }),
