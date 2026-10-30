@@ -69,7 +69,7 @@ Files up to 50MB are accepted. Uploaded objects are grouped into `images/`, `vid
 ## Notes
 
 - R2 public access means anyone with a media URL can read that object. Do not upload private or confidential files.
-- The Worker token protects the upload endpoint, but anyone who can access the CMS and knows the token can upload files. Rotate it with `npx wrangler secret put UPLOAD_TOKEN` if it is exposed.
+- The Worker token protects the upload endpoint, but anyone who can access the CMS and knows the token can upload files. Rotate it with `npx wrangler secret put UPLOAD_TOKEN --config cloudflare/worker/wrangler.toml` if it is exposed.
 - Existing Data URLs already saved in a browser's localStorage are not migrated automatically. Re-upload those assets through the CMS to move them into R2.
 - CMS text/settings (projects, team, disciplines, and other configuration) remain in localStorage. This scope intentionally changes media storage only.
 - For a production site, prefer a custom domain on the R2 bucket over the rate-limited `r2.dev` development URL.
