@@ -14,6 +14,10 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({
   onSelectProject,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<ProjectCategory>('all');
+  const [activePlayingProjectId, setActivePlayingProjectId] = useState<string | null>(() => {
+    // Autoplay the first project with video or default
+    return projects[0]?.id || null;
+  });
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const categories: { id: ProjectCategory; label: string }[] = [
@@ -27,6 +31,15 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({
   const filteredProjects = selectedCategory === 'all'
     ? projects
     : projects.filter((p) => p.category === selectedCategory || (selectedCategory === '3d-art' && (p.category as string) === '2d-art'));
+
+  // Sequence to the next project card when current video ends
+  const handleVideoEnded = (currentProjId: string) => {
+    const currentIndex = filteredProjects.findIndex((p) => p.id === currentProjId);
+    if (currentIndex !== -1 && filteredProjects.length > 1) {
+      const nextIndex = (currentIndex + 1) % filteredProjects.length;
+      setActivePlayingProjectId(filteredProjects[nextIndex].id);
+    }
+  };
 
   const scrollLeft = () => {
     sound.playTick();
@@ -160,8 +173,12 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({
                 <ProjectMediaPreview
                   image={project.image}
                   title={project.title}
+                  videoPreviewUrl={project.videoPreviewUrl}
                   videoDuration={project.videoDuration}
                   isLarge={false}
+                  isActiveVideo={activePlayingProjectId === project.id}
+                  onPlayRequested={() => setActivePlayingProjectId(project.id)}
+                  onVideoEnded={() => handleVideoEnded(project.id)}
                   onExpand={() => {
                     sound.playChime(680, 0.15);
                     onSelectProject(project);

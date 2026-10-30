@@ -28,10 +28,18 @@ export interface Project {
     role: string;
   };
   image: string;
+  galleryImages?: string[];
+  model3D?: {
+    name: string;
+    format: 'obj' | 'fbx';
+    dataUrlOrPath: string;
+  };
   videoPreviewUrl?: string;
   videoDuration?: string;
   featured?: boolean;
 }
+
+
 
 export interface TeamMember {
   id: string;
@@ -54,3 +62,43 @@ export interface DisciplineItem {
 
 export type LiquidSceneMode = 'water-pearl' | 'deep-coral' | 'bioluminescent-jelly' | 'wave-torus';
 export type OceanLightingTheme = 'deep-trench' | 'sunlit-shallows' | 'bioluminescent-night';
+
+export interface CollaborationItem {
+  id: string;
+  clientName: string;
+  clientRole: string;
+  projectOrCompany: string;
+  quote: string;
+  badge?: string;
+  avatarUrl?: string;
+  year?: string;
+}
+
+export interface BackgroundAudioConfig {
+  enabled: boolean;
+  title: string;
+  artist: string;
+  audioUrl: string;
+  volume: number;
+}
+
+export interface SiteVisualsConfig {
+  tabletImage: string;
+  watchReelThumbnail: string;
+  storyImage: string;
+}
+
+export interface Custom3DModelConfig {
+  id: string;
+  name: string;
+  format: 'obj' | 'fbx' | 'gltf';
+  dataUrlOrPath: string;
+  color?: string;
+  wireframe?: boolean;
+  roughness?: number;
+  metalness?: number;
+  scale?: number;
+  autoRotate?: boolean;
+}
+
+

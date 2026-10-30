@@ -24,6 +24,11 @@ export const PROJECTS: Project[] = [
       role: 'Game Producer, Coral Reef Games'
     },
     image: '/src/assets/images/ovr_game_unity_1793175840681.jpg',
+    galleryImages: [
+      '/src/assets/images/ovr_game_unity_1793175840681.jpg',
+      '/src/assets/images/ovr_art_2d_1793175838956.jpg',
+      '/src/assets/images/ovr_vr_spatial_1793175840681.jpg',
+    ],
     videoDuration: '0:34',
     featured: true,
   },
@@ -50,6 +55,16 @@ export const PROJECTS: Project[] = [
       role: 'Creative Director, Blue Horizon'
     },
     image: '/src/assets/images/ovr_art_2d_1793175838956.jpg',
+    galleryImages: [
+      '/src/assets/images/ovr_art_2d_1793175838956.jpg',
+      '/src/assets/images/ovr_design_graphic_1793175840681.jpg',
+      '/src/assets/images/ovr_story_studio_life_1793175840681.jpg',
+    ],
+    model3D: {
+      name: 'Subsea Diver & Relic (3D Model)',
+      format: 'obj',
+      dataUrlOrPath: '', // Triggers high fidelity preset in viewer
+    },
     videoDuration: '0:26',
     featured: true,
   },

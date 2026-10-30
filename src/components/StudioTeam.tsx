@@ -6,9 +6,10 @@ import { sound } from '../utils/audio';
 interface StudioTeamProps {
   team: TeamMember[];
   onOpenContact: () => void;
+  storyImage?: string;
 }
 
-export const StudioTeam: React.FC<StudioTeamProps> = ({ team, onOpenContact }) => {
+export const StudioTeam: React.FC<StudioTeamProps> = ({ team, onOpenContact, storyImage }) => {
   return (
     <section id="about" className="py-24 sm:py-32 bg-white relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-24">
@@ -53,7 +54,7 @@ export const StudioTeam: React.FC<StudioTeamProps> = ({ team, onOpenContact }) =
           <div className="lg:col-span-6">
             <div className="relative aspect-square max-w-md mx-auto rounded-[48px] overflow-hidden shadow-2xl border-4 border-white bg-sky-50">
               <img
-                src="/src/assets/images/ovr_story_studio_life_1793175840681.jpg"
+                src={storyImage || "/src/assets/images/ovr_story_studio_life_1793175840681.jpg"}
                 alt="OVRStudio Team Collaborating"
                 className="w-full h-full object-cover"
                 onError={(e) => {

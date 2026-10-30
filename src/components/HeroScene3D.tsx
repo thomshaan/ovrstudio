@@ -8,12 +8,14 @@ interface HeroScene3DProps {
   onExploreProjects: () => void;
   onOpenBuilder: () => void;
   onDiveDeeper: () => void;
+  tabletImage?: string;
 }
 
 export const HeroScene3D: React.FC<HeroScene3DProps> = ({
   onExploreProjects,
   onOpenBuilder,
   onDiveDeeper,
+  tabletImage,
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const [autoRotate, setAutoRotate] = useState<boolean>(true);
@@ -267,10 +269,10 @@ export const HeroScene3D: React.FC<HeroScene3DProps> = ({
   }, []);
 
   return (
-    <section id="hero" className="relative w-full bg-white pt-20 pb-4 overflow-hidden">
-      {/* Top Arched Viewport Window */}
+    <section id="hero" className="relative w-full bg-white pt-32 pb-8 overflow-hidden">
+      {/* Top Arched Viewport Window with clean isolation */}
       <div className="max-w-7xl mx-auto px-4 sm:px-8 relative z-10">
-        <div className="relative w-full h-[400px] sm:h-[500px] lg:h-[540px] rounded-[36px] sm:rounded-[48px] overflow-hidden shadow-2xl bg-[#032042] border-2 border-white/20">
+        <div className="relative w-full h-[400px] sm:h-[500px] lg:h-[540px] rounded-[32px] sm:rounded-[48px] overflow-hidden shadow-2xl bg-white border-2 border-slate-100">
           
           {/* 3D WebGL Canvas */}
           <div
@@ -402,7 +404,7 @@ export const HeroScene3D: React.FC<HeroScene3DProps> = ({
                   {/* Tablet Screen Surface */}
                   <div className="relative w-full h-[calc(100%-14px)] rounded-xl bg-gradient-to-br from-[#0284c7] via-[#0369a1] to-[#0b1d3a] p-4 flex flex-col justify-between overflow-hidden shadow-inner group">
                     <img
-                      src="/src/assets/images/ovr_game_unity_1793175840681.jpg"
+                      src={tabletImage || "/src/assets/images/ovr_game_unity_1793175840681.jpg"}
                       alt="Unity Game Gameplay"
                       className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
                     />

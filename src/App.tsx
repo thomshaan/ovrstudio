@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { HeroScene3D } from './components/HeroScene3D';
 import { Navbar } from './components/Navbar';
 import { WatchReelBanner } from './components/WatchReelBanner';
@@ -9,17 +9,44 @@ import { StudioManifesto } from './components/StudioManifesto';
 import { ProjectModal } from './components/ProjectModal';
 import { ContactModal } from './components/ContactModal';
 import { AdminCMSDashboard } from './components/AdminCMSDashboard';
+import { BackgroundMusicPlayer } from './components/BackgroundMusicPlayer';
 import { Footer } from './components/Footer';
 import { PROJECTS as DEFAULT_PROJECTS } from './data/projects';
 import { DEFAULT_DISCIPLINES } from './data/disciplines';
 import { TEAM_MEMBERS as DEFAULT_TEAM } from './data/team';
-import { Project, DisciplineItem, TeamMember } from './types';
-import { Lock, Unlock, Sparkles } from 'lucide-react';
-import { sound } from './utils/audio';
+import { DEFAULT_COLLABORATIONS } from './data/collaborations';
+import { Project, DisciplineItem, TeamMember, CollaborationItem, BackgroundAudioConfig, SiteVisualsConfig, Custom3DModelConfig } from './types';
+import { PRESET_AUDIO_TRACKS } from './utils/mediaUpload';
 
 const STORAGE_PROJECTS_KEY = 'ovr_studio_projects_v2';
 const STORAGE_DISCIPLINES_KEY = 'ovr_studio_disciplines_v2';
 const STORAGE_TEAM_KEY = 'ovr_studio_team_v2';
+const STORAGE_COLLABORATIONS_KEY = 'ovr_studio_collaborations_v2';
+const STORAGE_BG_AUDIO_KEY = 'ovr_studio_bg_audio_v2';
+const STORAGE_SITE_VISUALS_KEY = 'ovr_studio_site_visuals_v2';
+const STORAGE_CUSTOM_3D_KEY = 'ovr_studio_custom_3d_v2';
+
+const DEFAULT_BG_AUDIO: BackgroundAudioConfig = {
+  enabled: false,
+  title: PRESET_AUDIO_TRACKS[0].title,
+  artist: PRESET_AUDIO_TRACKS[0].artist,
+  audioUrl: PRESET_AUDIO_TRACKS[0].url,
+  volume: 0.4,
+};
+
+const DEFAULT_SITE_VISUALS: SiteVisualsConfig = {
+  tabletImage: '/src/assets/images/ovr_game_unity_1793175840681.jpg',
+  watchReelThumbnail: '/src/assets/images/ovr_art_2d_1793175838956.jpg',
+  storyImage: '/src/assets/images/ovr_story_studio_life_1793175840681.jpg',
+};
+
+const DEFAULT_CUSTOM_3D: Custom3DModelConfig = {
+  id: 'drone-default',
+  name: 'OVR Submersible Drone',
+  format: 'obj',
+  dataUrlOrPath: '',
+};
+
 
 export default function App() {
   const [activeSection, setActiveSection] = useState<string>('hero');
@@ -66,12 +93,86 @@ export default function App() {
     return DEFAULT_TEAM;
   });
 
+  // 4. Friendly Collaborations State (CRUD Managed)
+  const [collaborations, setCollaborations] = useState<CollaborationItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_COLLABORATIONS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // fallback
+    }
+    return DEFAULT_COLLABORATIONS;
+  });
+
+  // 5. Background Song / Audio State
+  const [bgAudioConfig, setBgAudioConfig] = useState<BackgroundAudioConfig>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_BG_AUDIO_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch {
+      // fallback
+    }
+    return DEFAULT_BG_AUDIO;
+  });
+
+  // 6. Site-wide Visuals State (Tablet screen, Showreel thumbnail, Story frame)
+  const [siteVisuals, setSiteVisuals] = useState<SiteVisualsConfig>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_SITE_VISUALS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch {
+      // fallback
+    }
+    return DEFAULT_SITE_VISUALS;
+  });
+
+  // 7. Custom 3D Model State (.OBJ / .FBX mesh upload & inspection)
+  const [custom3DModel, setCustom3DModel] = useState<Custom3DModelConfig>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_CUSTOM_3D_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch {
+      // fallback
+    }
+    return DEFAULT_CUSTOM_3D;
+  });
+
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [contactOpen, setContactOpen] = useState<boolean>(false);
   const [adminOpen, setAdminOpen] = useState<boolean>(false);
   const [contactInitialMessage, setContactInitialMessage] = useState<string>('');
 
   // Sync to localStorage
+  const handleUpdateSiteVisuals = (newVisuals: SiteVisualsConfig) => {
+    setSiteVisuals(newVisuals);
+    try {
+      localStorage.setItem(STORAGE_SITE_VISUALS_KEY, JSON.stringify(newVisuals));
+    } catch {
+      // storage quota
+    }
+  };
+
+  const handleUpdateCustom3DModel = (newModel: Custom3DModelConfig) => {
+    setCustom3DModel(newModel);
+    try {
+      localStorage.setItem(STORAGE_CUSTOM_3D_KEY, JSON.stringify(newModel));
+    } catch {
+      // storage quota
+    }
+  };
+
   const handleUpdateProjects = (newProjects: Project[]) => {
     setProjects(newProjects);
     try {
@@ -99,6 +200,24 @@ export default function App() {
     }
   };
 
+  const handleUpdateCollaborations = (newCollaborations: CollaborationItem[]) => {
+    setCollaborations(newCollaborations);
+    try {
+      localStorage.setItem(STORAGE_COLLABORATIONS_KEY, JSON.stringify(newCollaborations));
+    } catch {
+      // storage quota
+    }
+  };
+
+  const handleUpdateBgAudioConfig = (newConfig: BackgroundAudioConfig) => {
+    setBgAudioConfig(newConfig);
+    try {
+      localStorage.setItem(STORAGE_BG_AUDIO_KEY, JSON.stringify(newConfig));
+    } catch {
+      // storage quota
+    }
+  };
+
   const handleNavigate = (sectionId: string) => {
     setActiveSection(sectionId);
     if (sectionId === 'hero') {
@@ -117,16 +236,13 @@ export default function App() {
     setContactOpen(true);
   };
 
-  const isAdminUnlocked = typeof window !== 'undefined' && sessionStorage.getItem('ovr_admin_unlocked') === 'true';
-
   return (
     <div className="relative min-h-screen bg-white text-slate-900 selection:bg-orange-200 selection:text-orange-950 font-sans overflow-x-hidden">
-      {/* Improvised Fluid Background Color Aura & Shapes */}
-      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        <div className="absolute top-0 right-1/4 w-[600px] h-[600px] rounded-full bg-sky-100/60 blur-3xl opacity-70 animate-pulse duration-1000" />
-        <div className="absolute top-1/2 -left-20 w-[550px] h-[550px] rounded-full bg-blue-100/50 blur-3xl opacity-60" />
-        <div className="absolute bottom-1/4 right-10 w-[500px] h-[500px] rounded-full bg-orange-100/40 blur-3xl opacity-50" />
-      </div>
+      {/* 
+        Clean White Base:
+        Note: Removed the outer ambient backdrop blur from behind the 3D viewport hero window,
+        leaving the hero section clean, bright, and isolated on pure white.
+      */}
 
       {/* 1. Global Navigation Bar */}
       <Navbar
@@ -139,15 +255,19 @@ export default function App() {
       />
 
       <main>
-        {/* 2. Hero Section with 3D Submarine/Manta Viewport & "What is OVRStudio?" */}
+        {/* 2. Hero Section with 3D Viewport (Crisp white isolation, pt-32, no ambient backdrop) */}
         <HeroScene3D
           onExploreProjects={() => handleNavigate('projects')}
           onOpenBuilder={() => setAdminOpen(true)}
           onDiveDeeper={() => handleNavigate('about')}
+          tabletImage={siteVisuals.tabletImage}
         />
 
         {/* 3. Ocean School Styled Watch Trailer / Reel Banner */}
-        <WatchReelBanner onExploreProjects={() => handleNavigate('projects')} />
+        <WatchReelBanner
+          onExploreProjects={() => handleNavigate('projects')}
+          thumbnailImage={siteVisuals.watchReelThumbnail}
+        />
 
         {/* 4. Filterable Works & Short Videos (Cards accommodating video playback) */}
         <ProjectTabs
@@ -161,49 +281,40 @@ export default function App() {
         {/* 6. Our Story & Team with Team Pictures (Managed via CMS) */}
         <StudioTeam
           team={team}
+          storyImage={siteVisuals.storyImage}
           onOpenContact={() => {
             setContactInitialMessage('');
             setContactOpen(true);
           }}
         />
 
-        {/* 7. Studio Story & Manifesto */}
+        {/* 7. Studio Story, Beliefs & Dynamic Friendly Collaborations */}
         <StudioManifesto
+          collaborations={collaborations}
           onOpenContact={() => {
             setContactInitialMessage('');
             setContactOpen(true);
           }}
+          onOpenCMS={() => setAdminOpen(true)}
         />
       </main>
 
-      {/* 8. Studio Footer */}
+      {/* 8. Studio Footer with Studio CMS Access Button */}
       <Footer
         onOpenContact={() => {
           setContactInitialMessage('');
           setContactOpen(true);
         }}
         onNavigate={handleNavigate}
+        onOpenCMS={() => setAdminOpen(true)}
       />
 
-      {/* Floating Password-Protected Studio CMS Button with Interactive Shine Sweep */}
-      <div className="fixed bottom-6 right-6 z-40">
-        <button
-          onClick={() => {
-            sound.playTick();
-            setAdminOpen(true);
-          }}
-          className="group relative overflow-hidden px-4.5 py-3 bg-[#0b1d3a] hover:bg-[#142a52] text-white rounded-full text-xs font-semibold tracking-wide shadow-2xl flex items-center gap-2 border border-slate-700 transition-all duration-200 active:scale-95 hover:scale-105 cursor-pointer before:absolute before:inset-0 before:-translate-x-full hover:before:translate-x-full before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:transition-transform before:duration-700"
-          title="Studio CMS: Manage Works Cards, Disciplines, and People Cards"
-        >
-          {isAdminUnlocked ? (
-            <Unlock className="w-4 h-4 text-orange-400" />
-          ) : (
-            <Lock className="w-4 h-4 text-white group-hover:text-orange-400 transition-colors" />
-          )}
-          <span>Studio CMS</span>
-          <Sparkles className="w-3.5 h-3.5 text-orange-400 ml-0.5" />
-        </button>
-      </div>
+      {/* Background Music Player (User Uploadable & Configurable via Studio CMS) */}
+      <BackgroundMusicPlayer
+        config={bgAudioConfig}
+        onToggleEnabled={() => handleUpdateBgAudioConfig({ ...bgAudioConfig, enabled: !bgAudioConfig.enabled })}
+        onUpdateVolume={(vol) => handleUpdateBgAudioConfig({ ...bgAudioConfig, volume: vol })}
+      />
 
       {/* Fullscreen Project Case Study Modal with Short Video */}
       <ProjectModal
@@ -212,24 +323,33 @@ export default function App() {
         onInquireSimilar={handleInquireSimilar}
       />
 
-      {/* Contact & Commission Modal */}
+      {/* Contact & Commission Modal (No budget dropdown, directs directly to thomassiahaan31@gmail.com) */}
       <ContactModal
         isOpen={contactOpen}
         onClose={() => setContactOpen(false)}
         initialMessage={contactInitialMessage}
       />
 
-      {/* Dedicated Full-Screen Real CMS Admin Dashboard (Pass: ovr2026) */}
+      {/* Dedicated Real CMS Admin Dashboard (Master Pass: ovr2026) */}
       <AdminCMSDashboard
         isOpen={adminOpen}
         onClose={() => setAdminOpen(false)}
         projects={projects}
         disciplines={disciplines}
         team={team}
+        collaborations={collaborations}
+        bgAudioConfig={bgAudioConfig}
+        siteVisuals={siteVisuals}
+        custom3DModel={custom3DModel}
         onUpdateProjects={handleUpdateProjects}
         onUpdateDisciplines={handleUpdateDisciplines}
         onUpdateTeam={handleUpdateTeam}
+        onUpdateCollaborations={handleUpdateCollaborations}
+        onUpdateBgAudioConfig={handleUpdateBgAudioConfig}
+        onUpdateSiteVisuals={handleUpdateSiteVisuals}
+        onUpdateCustom3DModel={handleUpdateCustom3DModel}
       />
+
     </div>
   );
 }
