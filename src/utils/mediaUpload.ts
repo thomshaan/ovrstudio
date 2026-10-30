@@ -1,5 +1,5 @@
 /** Cloudflare R2 media upload helpers for the OVRStudio CMS. */
-import { getCmsToken } from './cmsSync';
+import { clearCmsToken, getCmsToken } from './cmsSync';
 export const MAX_FILE_SIZE_MB = 50;
 const UPLOAD_TOKEN_KEY = 'ovr_r2_upload_token';
 
@@ -43,6 +43,7 @@ export async function uploadFileToR2(file: File): Promise<FileUploadResult> {
   if (!response.ok) {
     if (response.status === 401 || response.status === 403) {
       try { window.sessionStorage.removeItem(UPLOAD_TOKEN_KEY); } catch { /* ignore */ }
+      if (getCmsToken()) clearCmsToken();
     }
     throw new Error(payload.error || `R2 upload failed (${response.status}).`);
   }
