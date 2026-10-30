@@ -1070,7 +1070,7 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
               <div className="bg-[#0b1d3a] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-4">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                   <Cloud className="w-5 h-5 text-orange-400" />
-                  <span>How Media Storage Works</span>
+                  <span>Cloudflare Storage &amp; Live CMS Sync</span>
                 </h3>
                 
                 <div className="space-y-3 text-sm text-slate-300 leading-relaxed">
@@ -1080,13 +1080,18 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                   </p>
 
                   <p>
-                    <strong>2. Upload security:</strong><br />
+                    <strong>2. Cloudflare D1 CMS:</strong><br />
+                    Projects, disciplines, team members, collaborations, background audio, site visuals, and the custom 3D model URL are stored centrally in D1. Admin changes publish immediately, and open websites refresh shared content every five seconds.
+                  </p>
+
+                  <p>
+                    <strong>3. Upload security:</strong><br />
                     Uploads require the private Worker token and are validated server-side. Keep the token private; it is requested when you upload and retained only for the current browser tab session.
                   </p>
                   
                   <ul className="list-disc list-inside space-y-1.5 pl-2 text-xs text-slate-300">
                     <li><strong className="text-white">Public delivery:</strong> Media URLs use your configured Cloudflare R2 public domain.</li>
-                    <li><strong className="text-white">Cross-device use:</strong> Public URLs can be loaded by every visitor; CMS metadata still remains in the browser's localStorage.</li>
+                    <li><strong className="text-white">Cross-device use:</strong> Public URLs can be loaded by every visitor; CMS content is synchronized through Cloudflare D1. LocalStorage is retained as a browser cache and one-time migration source.</li>
                   </ul>
                 </div>
 
