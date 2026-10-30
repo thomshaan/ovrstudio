@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Project, DisciplineItem, TeamMember, CollaborationItem, BackgroundAudioConfig, ProjectCategory } from '../types';
 import { PROJECTS as DEFAULT_PROJECTS } from '../data/projects';
 import { DEFAULT_DISCIPLINES } from '../data/disciplines';
@@ -9,6 +9,7 @@ import { CMSMediaUploader } from './CMSMediaUploader';
 import { Model3DViewer } from './Model3DViewer';
 import { PRESET_AUDIO_TRACKS, uploadFileToR2 } from '../utils/mediaUpload';
 import { resolveAssetUrl } from '../utils/assets';
+import { clearCmsToken, getCmsToken, loginToCms, verifyCmsSession } from '../utils/cmsSync';
 import {
   Lock,
   Plus,
@@ -56,10 +57,8 @@ interface AdminCMSDashboardProps {
   onUpdateBgAudioConfig: (config: BackgroundAudioConfig) => void;
   onUpdateSiteVisuals: (visuals: import('../types').SiteVisualsConfig) => void;
   onUpdateCustom3DModel: (model: import('../types').Custom3DModelConfig) => void;
+  onAdminAuthenticated: () => Promise<void>;
 }
-
-
-const MASTER_PASSWORD = 'ovr2026';
 
 const PRESET_IMAGES = [
   { label: '3D Character Art', url: 'assets/images/ovr_art_2d_1793175838956.jpg' },
@@ -89,14 +88,9 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
   onUpdateBgAudioConfig,
   onUpdateSiteVisuals,
   onUpdateCustom3DModel,
+  onAdminAuthenticated,
 }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    try {
-      return sessionStorage.getItem('ovr_admin_unlocked') === 'true';
-    } catch {
-      return false;
-    }
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!getCmsToken());
 
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState('');
@@ -122,34 +116,47 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    setTimeout(() => setToastMessage(null), 4500);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let active = true;
+    void verifyCmsSession().then((valid) => {
+      if (active && !valid) setIsAuthenticated(false);
+    });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    const handleSyncError = (event: Event) => {
+      const detail = (event as CustomEvent<string>).detail;
+      showToast(detail || 'Cloud publishing failed. Please sign in again.');
+    };
+    window.addEventListener('ovr-cms-sync-error', handleSyncError);
+    return () => window.removeEventListener('ovr-cms-sync-error', handleSyncError);
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput.trim() === MASTER_PASSWORD) {
+    setAuthError('');
+    try {
+      await loginToCms(passwordInput);
+      await onAdminAuthenticated();
       sound.playChime(750, 0.2);
       setIsAuthenticated(true);
-      try {
-        sessionStorage.setItem('ovr_admin_unlocked', 'true');
-      } catch {
-        // ignore
-      }
-      setAuthError('');
-    } else {
+      setPasswordInput('');
+    } catch (error) {
+      clearCmsToken();
       sound.playTick();
-      setAuthError('Incorrect studio password. Please try again.');
+      setAuthError(error instanceof Error ? error.message : 'Could not authenticate with the CMS.');
     }
   };
 
   const handleLogout = () => {
     sound.playTick();
+    clearCmsToken();
     setIsAuthenticated(false);
-    try {
-      sessionStorage.removeItem('ovr_admin_unlocked');
-    } catch {
-      // ignore
-    }
   };
 
   if (!isOpen) return null;
@@ -207,7 +214,7 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
           </form>
 
           <div className="mt-6 pt-6 border-t border-slate-100 text-xs text-slate-500">
-            Hint for studio team: Default password is <code className="bg-slate-100 text-orange-700 px-2 py-0.5 rounded font-mono font-bold">ovr2026</code>
+            Secure server-side authentication · Session expires after 12 hours
           </div>
         </div>
       </div>
@@ -250,7 +257,7 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
         <div className="flex items-center gap-3">
           <div className="hidden md:flex items-center gap-2 text-xs text-slate-300">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Live Local Sync Active</span>
+            <span>Cloud CMS Sync Active</span>
           </div>
 
           <button
@@ -440,7 +447,7 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
 
           <div className="pt-4 border-t border-white/10 text-[11px] text-slate-400">
             <div>OVRStudio Engine v2.4</div>
-            <div className="text-slate-500">Live Client Sync</div>
+            <div className="text-slate-500">D1 Cloud Publishing</div>
           </div>
         </aside>
 
@@ -1072,7 +1079,7 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
               <div className="bg-[#0b1d3a] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-4">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                   <Cloud className="w-5 h-5 text-orange-400" />
-                  <span>How Media Storage Works</span>
+                  <span>Cloudflare Storage &amp; Live CMS Sync</span>
                 </h3>
                 
                 <div className="space-y-3 text-sm text-slate-300 leading-relaxed">
@@ -1082,13 +1089,18 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                   </p>
 
                   <p>
-                    <strong>2. Upload security:</strong><br />
+                    <strong>2. Cloudflare D1 CMS:</strong><br />
+                    Projects, disciplines, team members, collaborations, background audio, site visuals, and the custom 3D model URL are stored centrally in D1. Admin changes publish immediately, and open websites refresh shared content every five seconds.
+                  </p>
+
+                  <p>
+                    <strong>3. Upload security:</strong><br />
                     Uploads require the private Worker token and are validated server-side. Keep the token private; it is requested when you upload and retained only for the current browser tab session.
                   </p>
                   
                   <ul className="list-disc list-inside space-y-1.5 pl-2 text-xs text-slate-300">
                     <li><strong className="text-white">Public delivery:</strong> Media URLs use your configured Cloudflare R2 public domain.</li>
-                    <li><strong className="text-white">Cross-device use:</strong> Public URLs can be loaded by every visitor; CMS metadata still remains in the browser's localStorage.</li>
+                    <li><strong className="text-white">Cross-device use:</strong> Public URLs can be loaded by every visitor; CMS content is synchronized through Cloudflare D1. LocalStorage is retained as a browser cache and one-time migration source.</li>
                   </ul>
                 </div>
 
@@ -1103,6 +1115,8 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                         team,
                         collaborations,
                         bgAudioConfig,
+                        siteVisuals,
+                        custom3DModel,
                         exportedAt: new Date().toISOString(),
                       };
                       const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -1139,6 +1153,8 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                             if (data.team) onUpdateTeam(data.team);
                             if (data.collaborations) onUpdateCollaborations(data.collaborations);
                             if (data.bgAudioConfig) onUpdateBgAudioConfig(data.bgAudioConfig);
+                            if (data.siteVisuals) onUpdateSiteVisuals(data.siteVisuals);
+                            if (data.custom3DModel) onUpdateCustom3DModel(data.custom3DModel);
                             showToast('Content restored from backup successfully!');
                           } catch {
                             alert('Invalid JSON file format.');

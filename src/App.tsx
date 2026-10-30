@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { HeroScene3D } from './components/HeroScene3D';
 import { Navbar } from './components/Navbar';
 import { WatchReelBanner } from './components/WatchReelBanner';
@@ -17,6 +17,12 @@ import { TEAM_MEMBERS as DEFAULT_TEAM } from './data/team';
 import { DEFAULT_COLLABORATIONS } from './data/collaborations';
 import { Project, DisciplineItem, TeamMember, CollaborationItem, BackgroundAudioConfig, SiteVisualsConfig, Custom3DModelConfig } from './types';
 import { PRESET_AUDIO_TRACKS } from './utils/mediaUpload';
+import { fetchCmsSnapshot, migrateCmsSnapshot, publishCmsContent, type CmsSnapshot } from './utils/cmsSync';
+
+function reportCmsSyncError(error: unknown) {
+  const message = error instanceof Error ? error.message : 'Could not sync this change to the cloud.';
+  window.dispatchEvent(new CustomEvent('ovr-cms-sync-error', { detail: message }));
+}
 
 const STORAGE_PROJECTS_KEY = 'ovr_studio_projects_v2';
 const STORAGE_DISCIPLINES_KEY = 'ovr_studio_disciplines_v2';
@@ -149,6 +155,50 @@ export default function App() {
     return DEFAULT_CUSTOM_3D;
   });
 
+  const applyCmsSnapshot = (content: CmsSnapshot) => {
+    if (Array.isArray(content.projects)) { setProjects(content.projects as Project[]); localStorage.setItem(STORAGE_PROJECTS_KEY, JSON.stringify(content.projects)); }
+    if (Array.isArray(content.disciplines)) { setDisciplines(content.disciplines as DisciplineItem[]); localStorage.setItem(STORAGE_DISCIPLINES_KEY, JSON.stringify(content.disciplines)); }
+    if (Array.isArray(content.team)) { setTeam(content.team as TeamMember[]); localStorage.setItem(STORAGE_TEAM_KEY, JSON.stringify(content.team)); }
+    if (Array.isArray(content.collaborations)) { setCollaborations(content.collaborations as CollaborationItem[]); localStorage.setItem(STORAGE_COLLABORATIONS_KEY, JSON.stringify(content.collaborations)); }
+    if (content.bgAudioConfig && typeof content.bgAudioConfig === 'object') { setBgAudioConfig(content.bgAudioConfig as BackgroundAudioConfig); localStorage.setItem(STORAGE_BG_AUDIO_KEY, JSON.stringify(content.bgAudioConfig)); }
+    if (content.siteVisuals && typeof content.siteVisuals === 'object') { setSiteVisuals(content.siteVisuals as SiteVisualsConfig); localStorage.setItem(STORAGE_SITE_VISUALS_KEY, JSON.stringify(content.siteVisuals)); }
+    if (content.custom3DModel && typeof content.custom3DModel === 'object') { setCustom3DModel(content.custom3DModel as Custom3DModelConfig); localStorage.setItem(STORAGE_CUSTOM_3D_KEY, JSON.stringify(content.custom3DModel)); }
+  };
+
+  // D1 is authoritative once the first authenticated migration has completed.
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        const snapshot = await fetchCmsSnapshot();
+        if (!cancelled && snapshot.initialized) applyCmsSnapshot(snapshot.content);
+      } catch {
+        // Keep the local cache/default content available while the API is being configured.
+      }
+    };
+    void refresh();
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void refresh();
+    }, 5000);
+    return () => { cancelled = true; window.clearInterval(interval); };
+  }, []);
+
+  const handleAdminAuthenticated = async () => {
+    let snapshot = await fetchCmsSnapshot();
+    if (!snapshot.initialized) {
+      try {
+        snapshot = await migrateCmsSnapshot({
+          projects, disciplines, team, collaborations, bgAudioConfig, siteVisuals, custom3DModel,
+        });
+      } catch (error) {
+        // Another authenticated browser may have completed the one-time import first.
+        if (!(error instanceof Error) || !error.message.includes('already initialized')) throw error;
+        snapshot = await fetchCmsSnapshot();
+      }
+    }
+    if (snapshot.initialized) applyCmsSnapshot(snapshot.content);
+  };
+
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [contactOpen, setContactOpen] = useState<boolean>(false);
   const [adminOpen, setAdminOpen] = useState<boolean>(false);
@@ -159,6 +209,7 @@ export default function App() {
     setSiteVisuals(newVisuals);
     try {
       localStorage.setItem(STORAGE_SITE_VISUALS_KEY, JSON.stringify(newVisuals));
+      void publishCmsContent('siteVisuals', newVisuals).catch(reportCmsSyncError);
     } catch {
       // storage quota
     }
@@ -168,6 +219,7 @@ export default function App() {
     setCustom3DModel(newModel);
     try {
       localStorage.setItem(STORAGE_CUSTOM_3D_KEY, JSON.stringify(newModel));
+      void publishCmsContent('custom3DModel', newModel).catch(reportCmsSyncError);
     } catch {
       // storage quota
     }
@@ -177,6 +229,7 @@ export default function App() {
     setProjects(newProjects);
     try {
       localStorage.setItem(STORAGE_PROJECTS_KEY, JSON.stringify(newProjects));
+      void publishCmsContent('projects', newProjects).catch(reportCmsSyncError);
     } catch {
       // storage quota
     }
@@ -186,6 +239,7 @@ export default function App() {
     setDisciplines(newDisciplines);
     try {
       localStorage.setItem(STORAGE_DISCIPLINES_KEY, JSON.stringify(newDisciplines));
+      void publishCmsContent('disciplines', newDisciplines).catch(reportCmsSyncError);
     } catch {
       // storage quota
     }
@@ -195,6 +249,7 @@ export default function App() {
     setTeam(newTeam);
     try {
       localStorage.setItem(STORAGE_TEAM_KEY, JSON.stringify(newTeam));
+      void publishCmsContent('team', newTeam).catch(reportCmsSyncError);
     } catch {
       // storage quota
     }
@@ -204,6 +259,7 @@ export default function App() {
     setCollaborations(newCollaborations);
     try {
       localStorage.setItem(STORAGE_COLLABORATIONS_KEY, JSON.stringify(newCollaborations));
+      void publishCmsContent('collaborations', newCollaborations).catch(reportCmsSyncError);
     } catch {
       // storage quota
     }
@@ -213,6 +269,7 @@ export default function App() {
     setBgAudioConfig(newConfig);
     try {
       localStorage.setItem(STORAGE_BG_AUDIO_KEY, JSON.stringify(newConfig));
+      void publishCmsContent('bgAudioConfig', newConfig).catch(reportCmsSyncError);
     } catch {
       // storage quota
     }
@@ -330,7 +387,7 @@ export default function App() {
         initialMessage={contactInitialMessage}
       />
 
-      {/* Dedicated Real CMS Admin Dashboard (Master Pass: ovr2026) */}
+      {/* Dedicated Real CMS Admin Dashboard */}
       <AdminCMSDashboard
         isOpen={adminOpen}
         onClose={() => setAdminOpen(false)}
@@ -348,6 +405,7 @@ export default function App() {
         onUpdateBgAudioConfig={handleUpdateBgAudioConfig}
         onUpdateSiteVisuals={handleUpdateSiteVisuals}
         onUpdateCustom3DModel={handleUpdateCustom3DModel}
+        onAdminAuthenticated={handleAdminAuthenticated}
       />
 
     </div>

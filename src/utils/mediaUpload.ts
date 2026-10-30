@@ -1,4 +1,5 @@
 /** Cloudflare R2 media upload helpers for the OVRStudio CMS. */
+import { clearCmsToken, getCmsToken } from './cmsSync';
 export const MAX_FILE_SIZE_MB = 50;
 const UPLOAD_TOKEN_KEY = 'ovr_r2_upload_token';
 
@@ -21,10 +22,11 @@ export async function uploadFileToR2(file: File): Promise<FileUploadResult> {
     throw new Error(`File is ${(file.size / (1024 * 1024)).toFixed(1)}MB. The maximum upload size is ${MAX_FILE_SIZE_MB}MB.`);
   }
 
-  let token = '';
-  try { token = window.sessionStorage.getItem(UPLOAD_TOKEN_KEY) || ''; } catch { /* private browsing */ }
+  // A signed CMS session is accepted by the upload Worker; no second token prompt is needed.
+  let token = getCmsToken();
+  try { if (!token) token = window.sessionStorage.getItem(UPLOAD_TOKEN_KEY) || ''; } catch { /* private browsing */ }
   if (!token) {
-    token = window.prompt('Enter the OVRStudio R2 upload token supplied when configuring the Cloudflare Worker:')?.trim() || '';
+    token = window.prompt('Sign in to the OVRStudio CMS first, or enter the legacy R2 upload token:')?.trim() || '';
     if (!token) throw new Error('Upload cancelled: an upload token is required.');
     try { window.sessionStorage.setItem(UPLOAD_TOKEN_KEY, token); } catch { /* session storage unavailable */ }
   }
@@ -41,6 +43,7 @@ export async function uploadFileToR2(file: File): Promise<FileUploadResult> {
   if (!response.ok) {
     if (response.status === 401 || response.status === 403) {
       try { window.sessionStorage.removeItem(UPLOAD_TOKEN_KEY); } catch { /* ignore */ }
+      if (getCmsToken()) clearCmsToken();
     }
     throw new Error(payload.error || `R2 upload failed (${response.status}).`);
   }

@@ -1,8 +1,8 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "ovrstudio",
-  "compatibility_date": "2026-10-30",
-  "assets": {
-    "directory": "./dist"
-  }
+ "$schema":"node_modules/wrangler/config-schema.json",
+ "name":"ovrstudio",
+ "main":"worker/index.ts",
+ "compatibility_date":"2026-10-30",
+ "assets":{"directory":"./dist","binding":"ASSETS","not_found_handling":"single-page-application","run_worker_first":["/api/*"]},
+ "d1_databases":[{"binding":"CMS_DB","database_name":"ovrstudio-cms","database_id":"SET_BY_SETUP_SCRIPT"}]
 }

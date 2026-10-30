@@ -9,6 +9,7 @@ interface Env {
   MEDIA_BUCKET: R2Bucket;
   PUBLIC_BASE_URL: string;
   UPLOAD_TOKEN: string;
+  CMS_JWT_SECRET?: string;
   ALLOWED_ORIGINS: string;
 }
 
@@ -37,6 +38,31 @@ function corsHeaders(request: Request, env: Env): Headers {
 function json(data: unknown, status: number, headers: Headers): Response {
   headers.set('Content-Type', 'application/json; charset=utf-8');
   return new Response(JSON.stringify(data), { status, headers });
+}
+
+function decodeBase64Url(value: string): Uint8Array {
+  const base64 = value.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - value.length % 4) % 4);
+  const binary = atob(base64);
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+}
+
+async function verifyCmsToken(token: string, secret: string): Promise<boolean> {
+  if (!secret) return false;
+  const [payload, signature, extra] = token.split('.');
+  if (!payload || !signature || extra) return false;
+  try {
+    const key = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify'],
+    );
+    const valid = await crypto.subtle.verify(
+      'HMAC', key, decodeBase64Url(signature), new TextEncoder().encode(payload),
+    );
+    if (!valid) return false;
+    const claims = JSON.parse(new TextDecoder().decode(decodeBase64Url(payload)));
+    return claims.sub === 'ovrstudio-admin' && Number(claims.exp) > Math.floor(Date.now() / 1000);
+  } catch {
+    return false;
+  }
 }
 
 function safeExtension(filename: string, contentType: string): string {
@@ -68,7 +94,9 @@ export default {
 
     const auth = request.headers.get('Authorization') || '';
     const suppliedToken = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-    if (!env.UPLOAD_TOKEN || suppliedToken !== env.UPLOAD_TOKEN) return json({ error: 'Invalid or missing upload token.' }, 401, headers);
+    const legacyTokenValid = !!env.UPLOAD_TOKEN && suppliedToken === env.UPLOAD_TOKEN;
+    const cmsSessionValid = await verifyCmsToken(suppliedToken, env.CMS_JWT_SECRET || '');
+    if (!legacyTokenValid && !cmsSessionValid) return json({ error: 'Invalid or expired upload authorization. Sign in to the CMS again.' }, 401, headers);
 
     const declaredLength = Number(request.headers.get('Content-Length') || 0);
     if (declaredLength > MAX_SIZE + 1024 * 1024) return json({ error: 'Upload exceeds the 50MB limit.' }, 413, headers);
