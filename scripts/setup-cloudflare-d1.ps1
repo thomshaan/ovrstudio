@@ -94,7 +94,26 @@ $config | ConvertTo-Json -Depth 30 | Set-Content -Path $configPath -Encoding utf
 Write-Host "`n[3/6] Applying the D1 schema..." -ForegroundColor Cyan
 Invoke-Wrangler -Arguments @("d1", "execute", $DatabaseName, "--remote", "--file", $migrationPath, "--yes")
 
-Write-Host "`n[4/6] Creating secure CMS credentials..." -ForegroundColor Cyan
+Write-Host "`n[4/7] Saving the generated D1 binding to the current Git branch..." -ForegroundColor Cyan
+if (Get-Command git -ErrorAction SilentlyContinue) {
+  Push-Location $repoRoot
+  try {
+    $branch = (& git branch --show-current).Trim()
+    if ($branch -and $branch -notin @("main", "master")) {
+      & git add -- wrangler.jsonc
+      & git commit --only wrangler.jsonc -m "Configure OVRStudio D1 database binding"
+      if ($LASTEXITCODE -ne 0) { throw "Could not commit the generated D1 binding." }
+      & git push origin $branch
+      if ($LASTEXITCODE -ne 0) { throw "Could not push the generated D1 binding. Push the current branch, then rerun the setup script." }
+    } else {
+      Write-Warning "Current branch is main/master; the D1 binding was updated locally but not pushed automatically."
+    }
+  } finally { Pop-Location }
+} else {
+  Write-Warning "Git is not installed; the D1 binding was updated locally only."
+}
+
+Write-Host "`n[5/7] Creating secure CMS credentials..." -ForegroundColor Cyan
 if (-not (Test-Path $passwordPath)) {
   $password = New-SecretValue 24
   [System.IO.File]::WriteAllText($passwordPath, $password, [System.Text.UTF8Encoding]::new($false))
@@ -109,7 +128,7 @@ Set-WorkerSecret -Name "CMS_JWT_SECRET" -Path $jwtPath
 Set-WorkerSecret -Name "CMS_JWT_SECRET" -Path $jwtPath -WorkerName "ovrstudio-media-upload"
 
 if (-not $SkipDeploy) {
-  Write-Host "`n[5/6] Installing dependencies and building the site..." -ForegroundColor Cyan
+  Write-Host "`n[6/7] Installing dependencies and building the site..." -ForegroundColor Cyan
   Push-Location $repoRoot
   try {
     & bun install
@@ -118,7 +137,7 @@ if (-not $SkipDeploy) {
     if ($LASTEXITCODE -ne 0) { throw "The Vite production build failed. Worker deployment was stopped." }
   } finally { Pop-Location }
 
-  Write-Host "`n[6/6] Deploying the Worker and static website..." -ForegroundColor Cyan
+  Write-Host "`n[7/7] Deploying the Worker and static website..." -ForegroundColor Cyan
   Invoke-Wrangler -Arguments @("deploy")
   Write-Host "`nDeploying the updated R2 upload Worker with CMS-session support..." -ForegroundColor Cyan
   Invoke-Wrangler -Arguments @("deploy", "--config", "cloudflare/worker/wrangler.toml")
