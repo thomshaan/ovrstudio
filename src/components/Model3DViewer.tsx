@@ -4,6 +4,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { RotateCw, ZoomIn, ZoomOut, Eye, Upload, Box, Check, Sparkles, Layers } from 'lucide-react';
 import { parse3DModel, createPreset3DModel } from '../utils/model3DLoader';
 import { sound } from '../utils/audio';
+import { uploadFileToR2 } from '../utils/mediaUpload';
 
 interface Model3DViewerProps {
   initialPreset?: 'marine-drone' | 'crystal-relic' | 'mecha-helmet';
@@ -223,6 +224,7 @@ export const Model3DViewer: React.FC<Model3DViewerProps> = ({
     try {
       const text = await file.text();
       const res = await parse3DModel(text, file.name);
+      const uploaded = await uploadFileToR2(file);
 
       if (modelHolderRef.current) {
         modelHolderRef.current.clear();
@@ -236,7 +238,7 @@ export const Model3DViewer: React.FC<Model3DViewerProps> = ({
       sound.playChime(750, 0.2);
 
       if (onModelUploaded) {
-        onModelUploaded(file.name, text);
+        onModelUploaded(file.name, uploaded.url);
       }
     } catch (err: unknown) {
       setLoadingError(err instanceof Error ? err.message : 'Error parsing 3D model.');
