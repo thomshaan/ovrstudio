@@ -8,4 +8,4 @@ bucket_name = "ovrstudio"
 
 [vars]
 PUBLIC_BASE_URL = "https://pub-fffb5bb212294005837d690a745535a1.r2.dev"
-ALLOWED_ORIGINS = "https://thomshaan.github.io,http://localhost:5173"
+ALLOWED_ORIGINS = "https://thomshaan.github.io,http://localhost:5173,https://ovrstudio.thomassiahaan31.workers.dev"
