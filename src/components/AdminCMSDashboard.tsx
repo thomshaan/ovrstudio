@@ -1591,7 +1591,7 @@ const ProjectEditorModal: React.FC<ProjectEditorModalProps> = ({
                   {model3DData ? (
                     <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
                       <Check className="w-3.5 h-3.5" />
-                      <span>Custom .OBJ Loaded ({Math.round(model3DData.length / 1024)} KB)</span>
+                      <span>Custom .OBJ stored in R2</span>
                     </span>
                   ) : (
                     <span className="text-xs text-slate-400">
