@@ -1,13 +1,16 @@
 [CmdletBinding()]
 param(
   [string]$DatabaseName = "ovrstudio-cms",
-  [string]$BindingName = "CMS_DB"
+  [string]$BindingName = "CMS_DB",
+  [switch]$SkipDeploy
 )
 
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $configPath = Join-Path $repoRoot "wrangler.jsonc"
 $migrationPath = Join-Path $repoRoot "migrations/0001_create_cms_content.sql"
+$passwordPath = Join-Path $repoRoot ".cms-admin-password.txt"
+$jwtPath = Join-Path $repoRoot ".cms-jwt-secret.txt"
 
 function Invoke-Wrangler {
   param([string[]]$Arguments)
@@ -15,77 +18,110 @@ function Invoke-Wrangler {
   try {
     & npx --yes wrangler@latest @Arguments
     if ($LASTEXITCODE -ne 0) { throw "Wrangler command failed: wrangler $($Arguments -join ' ')" }
-  } finally {
-    Pop-Location
-  }
+  } finally { Pop-Location }
+}
+
+function New-SecretValue([int]$Bytes = 32) {
+  $buffer = [byte[]]::new($Bytes)
+  $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+  try { $rng.GetBytes($buffer) } finally { $rng.Dispose() }
+  return [Convert]::ToBase64String($buffer).TrimEnd('=').Replace('+','-').Replace('/','_')
+}
+
+function Set-WorkerSecret([string]$Name, [string]$Path) {
+  $value = (Get-Content -Path $Path -Raw).Trim()
+  $value | & npx --yes wrangler@latest secret put $Name
+  if ($LASTEXITCODE -ne 0) { throw "Could not configure Worker secret $Name." }
 }
 
 if (-not (Get-Command bun -ErrorAction SilentlyContinue)) {
-  throw "Bun is required. Install it from https://bun.sh, then run this script again."
+  throw "Bun is required. Install it from https://bun.sh, then rerun this script."
 }
 if (-not (Test-Path $configPath)) { throw "Could not find wrangler.jsonc at $configPath" }
 if (-not (Test-Path $migrationPath)) { throw "Could not find the D1 schema migration at $migrationPath" }
 
-Write-Host "`n[1/4] Checking Cloudflare authentication..." -ForegroundColor Cyan
+Write-Host "`n[1/6] Checking your existing Cloudflare login..." -ForegroundColor Cyan
 Invoke-Wrangler -Arguments @("whoami")
 
-Write-Host "`n[2/4] Finding or creating the D1 database..." -ForegroundColor Cyan
-Push-Location $repoRoot
-try {
-  $listOutput = & npx --yes wrangler@latest d1 list --json 2>$null
-  $databaseId = $null
-  if ($LASTEXITCODE -eq 0) {
-    $listText = $listOutput -join "`n"
-    try {
-      $parsed = $listText | ConvertFrom-Json
-      $entries = @()
-      if ($parsed -is [array]) { $entries = $parsed }
-      elseif ($parsed.result -is [array]) { $entries = $parsed.result }
-      elseif ($parsed.databases -is [array]) { $entries = $parsed.databases }
-      foreach ($entry in $entries) {
-        $name = if ($entry.database_name) { $entry.database_name } else { $entry.name }
-        if ($name -eq $DatabaseName) {
-          $databaseId = if ($entry.database_id) { $entry.database_id } elseif ($entry.uuid) { $entry.uuid } else { $entry.id }
-          break
-        }
+Write-Host "`n[2/6] Finding or creating the D1 database..." -ForegroundColor Cyan
+$databaseId = $null
+$listOutput = & npx --yes wrangler@latest d1 list --json 2>$null
+if ($LASTEXITCODE -eq 0) {
+  try {
+    $parsed = ($listOutput -join "`n") | ConvertFrom-Json
+    $entries = if ($parsed -is [array]) { $parsed } elseif ($parsed.result -is [array]) { $parsed.result } elseif ($parsed.databases -is [array]) { $parsed.databases } else { @() }
+    foreach ($entry in $entries) {
+      $name = if ($entry.database_name) { $entry.database_name } else { $entry.name }
+      if ($name -eq $DatabaseName) {
+        $databaseId = if ($entry.database_id) { $entry.database_id } elseif ($entry.uuid) { $entry.uuid } else { $entry.id }
+        break
       }
-    } catch {
-      Write-Warning "Could not parse the D1 list response; attempting database creation."
     }
-  }
-
-  if (-not $databaseId) {
-    Write-Host "Creating $DatabaseName in the Asia-Pacific region..."
-    & npx --yes wrangler@latest d1 create $DatabaseName --binding $BindingName --update-config --location apac
-    if ($LASTEXITCODE -ne 0) { throw "D1 creation failed. Check the Wrangler output above." }
-  } else {
-    Write-Host "Found existing database $DatabaseName ($databaseId). Ensuring the Worker binding exists..."
-    $configText = Get-Content $configPath -Raw
-    $config = $configText | ConvertFrom-Json
-    if (-not $config.d1_databases) { $config | Add-Member -NotePropertyName d1_databases -NotePropertyValue @() }
-    $existing = @($config.d1_databases | Where-Object { $_.binding -eq $BindingName })
-    if ($existing.Count -eq 0) {
-      $binding = [ordered]@{
-        binding = $BindingName
-        database_name = $DatabaseName
-        database_id = $databaseId
-      }
-      $config.d1_databases = @($config.d1_databases) + $binding
-      $config | ConvertTo-Json -Depth 20 | Set-Content -Path $configPath -Encoding utf8
-    } elseif ($existing[0].database_id -ne $databaseId) {
-      throw "Binding $BindingName already points to a different D1 database. Refusing to overwrite it automatically."
-    }
-  }
-} finally {
-  Pop-Location
+  } catch { Write-Warning "Could not parse the database list; checking the create response next." }
 }
+if (-not $databaseId) {
+  Write-Host "Creating $DatabaseName in the Asia-Pacific region..."
+  $createOutput = & npx --yes wrangler@latest d1 create $DatabaseName --location apac 2>&1
+  if ($LASTEXITCODE -ne 0) { throw "D1 creation failed: $($createOutput -join "`n")" }
+  $createText = $createOutput -join "`n"
+  if ($createText -match '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}') {
+    $databaseId = $Matches[0]
+  } else {
+    $listOutput = & npx --yes wrangler@latest d1 list --json
+    $parsed = ($listOutput -join "`n") | ConvertFrom-Json
+    $entries = if ($parsed -is [array]) { $parsed } elseif ($parsed.result -is [array]) { $parsed.result } elseif ($parsed.databases -is [array]) { $parsed.databases } else { @() }
+    $entry = $entries | Where-Object { (($_.database_name) -or ($_.name)) -eq $DatabaseName } | Select-Object -First 1
+    if ($entry) { $databaseId = if ($entry.database_id) { $entry.database_id } elseif ($entry.uuid) { $entry.uuid } else { $entry.id } }
+  }
+}
+if (-not $databaseId) { throw "Could not resolve the D1 database ID after creation. No Worker deployment was attempted." }
 
-Write-Host "`n[3/4] Applying the CMS schema to the remote database..." -ForegroundColor Cyan
+$config = Get-Content $configPath -Raw | ConvertFrom-Json
+if (-not $config.d1_databases) { $config | Add-Member -NotePropertyName d1_databases -NotePropertyValue @() }
+$bindings = @($config.d1_databases)
+$existing = @($bindings | Where-Object { $_.binding -eq $BindingName })
+if ($existing.Count -gt 0) {
+  $existing[0].database_name = $DatabaseName
+  $existing[0].database_id = $databaseId
+} else {
+  $bindings += [pscustomobject]@{ binding = $BindingName; database_name = $DatabaseName; database_id = $databaseId }
+}
+$config.d1_databases = $bindings
+$config | ConvertTo-Json -Depth 30 | Set-Content -Path $configPath -Encoding utf8
+
+Write-Host "`n[3/6] Applying the D1 schema..." -ForegroundColor Cyan
 Invoke-Wrangler -Arguments @("d1", "execute", $DatabaseName, "--remote", "--file", $migrationPath, "--yes")
 
-Write-Host "`n[4/4] Verifying database details..." -ForegroundColor Cyan
-Invoke-Wrangler -Arguments @("d1", "info", $DatabaseName, "--json")
+Write-Host "`n[4/6] Creating secure CMS credentials..." -ForegroundColor Cyan
+if (-not (Test-Path $passwordPath)) {
+  $password = New-SecretValue 24
+  [System.IO.File]::WriteAllText($passwordPath, $password, [System.Text.UTF8Encoding]::new($false))
+}
+if (-not (Test-Path $jwtPath)) {
+  $jwt = New-SecretValue 48
+  [System.IO.File]::WriteAllText($jwtPath, $jwt, [System.Text.UTF8Encoding]::new($false))
+}
+Set-WorkerSecret -Name "CMS_ADMIN_PASSWORD" -Path $passwordPath
+Set-WorkerSecret -Name "CMS_JWT_SECRET" -Path $jwtPath
 
-Write-Host "`nD1 is ready. Database: $DatabaseName | Binding: $BindingName" -ForegroundColor Green
-Write-Host "The script does not touch your existing R2 bucket or upload token."
-Write-Host "Next: deploy the CMS Worker/API code that uses this binding."
+if (-not $SkipDeploy) {
+  Write-Host "`n[5/6] Installing dependencies and building the site..." -ForegroundColor Cyan
+  Push-Location $repoRoot
+  try {
+    & bun install
+    if ($LASTEXITCODE -ne 0) { throw "bun install failed." }
+    & bun run build
+    if ($LASTEXITCODE -ne 0) { throw "The Vite production build failed. Worker deployment was stopped." }
+  } finally { Pop-Location }
+
+  Write-Host "`n[6/6] Deploying the Worker and static website..." -ForegroundColor Cyan
+  Invoke-Wrangler -Arguments @("deploy")
+} else {
+  Write-Host "`n[5/6] Deployment skipped by request." -ForegroundColor Yellow
+  Write-Host "Run 'bun install; bun run build; npx wrangler deploy' when ready."
+}
+
+Write-Host "`nOVRStudio D1 CMS infrastructure is configured." -ForegroundColor Green
+Write-Host "Admin password saved locally at: $passwordPath" -ForegroundColor Yellow
+Write-Host "Open that local file and use its contents to sign in to the CMS."
+Write-Host "The R2 media bucket and its existing upload token were not modified."
