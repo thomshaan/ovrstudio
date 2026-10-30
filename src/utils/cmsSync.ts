@@ -13,9 +13,11 @@ export function clearCmsToken() {
   try { sessionStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ }
 }
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  headers.set('Content-Type', 'application/json');
   const response = await fetch(endpoint(path), {
     ...init,
-    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
+    headers,
     cache: 'no-store',
   });
   const payload = await response.json().catch(() => ({}));
