@@ -25,12 +25,12 @@ function corsHeaders(request: Request, env: Env): Headers {
   const allowed = (env.ALLOWED_ORIGINS || '').split(',').map((v) => v.trim()).filter(Boolean);
   const headers = new Headers({
     'Vary': 'Origin',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, HEAD, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Authorization, Content-Type',
     'Access-Control-Max-Age': '86400',
   });
-  if (allowed.includes('*')) headers.set('Access-Control-Allow-Origin', '*');
-  else if (allowed.includes(origin)) headers.set('Access-Control-Allow-Origin', origin);
+  if (origin && allowed.includes('*')) headers.set('Access-Control-Allow-Origin', '*');
+  else if (origin && allowed.includes(origin)) headers.set('Access-Control-Allow-Origin', origin);
   return headers;
 }
 
@@ -58,10 +58,11 @@ export default {
     const url = new URL(request.url);
 
     if (request.method === 'OPTIONS') {
-      if (!headers.has('Access-Control-Allow-Origin')) return new Response(null, { status: 403 });
+      if (!request.headers.get('Origin') || !headers.has('Access-Control-Allow-Origin')) return new Response(null, { status: 403 });
       return new Response(null, { status: 204, headers });
     }
-    if (!headers.has('Access-Control-Allow-Origin')) return json({ error: 'Origin not allowed.' }, 403, headers);
+    // Direct visits and non-browser clients may omit Origin; only enforce the allowlist when it is present.
+    if (request.headers.get('Origin') && !headers.has('Access-Control-Allow-Origin')) return json({ error: 'Origin not allowed.' }, 403, headers);
     if (url.pathname === '/health' && request.method === 'GET') return json({ ok: true }, 200, headers);
     if (url.pathname !== '/upload' || request.method !== 'POST') return json({ error: 'Not found.' }, 404, headers);
 
