@@ -4,7 +4,7 @@ compatibility_date = "2026-10-30"
 
 [[r2_buckets]]
 binding = "MEDIA_BUCKET"
-bucket_name = "REPLACE_WITH_YOUR_R2_BUCKET_NAME"
+bucket_name = "ovrstudio"
 
 [vars]
 PUBLIC_BASE_URL = "https://pub-fffb5bb212294005837d690a745535a1.r2.dev"
