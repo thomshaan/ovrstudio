@@ -7,6 +7,9 @@ Prerequisites: Bun, Git, and an existing Wrangler login to the Cloudflare accoun
 From the repository root, on the `feature/cloudflare-d1-cms-sync` branch, run:
 
 ```powershell
+git fetch origin
+git checkout feature/cloudflare-d1-cms-sync
+git pull
 Set-ExecutionPolicy -Scope Process Bypass
 .\scripts\setup-cloudflare-d1.ps1
 ```
