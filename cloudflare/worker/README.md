@@ -50,7 +50,9 @@ After deployment, copy the Worker URL. It will look similar to:
 
 ## 3. Configure the website build
 
-Set this environment variable in the environment that builds/deploys the website:
+For this repository's GitHub Pages deployment, open **GitHub → Settings → Secrets and variables → Actions → Variables**, create a repository variable named `VITE_R2_UPLOAD_ENDPOINT`, and set it to your deployed Worker base URL. The deployment workflow now passes this variable into Vite at build time. For any other build environment, set the same variable there.
+
+The value should look like:
 
 ```env
 VITE_R2_UPLOAD_ENDPOINT=https://YOUR-WORKER.workers.dev
