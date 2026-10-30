@@ -100,9 +100,12 @@ if (Get-Command git -ErrorAction SilentlyContinue) {
   try {
     $branch = (& git branch --show-current).Trim()
     if ($branch -and $branch -notin @("main", "master")) {
-      & git add -- wrangler.jsonc
-      & git commit --only wrangler.jsonc -m "Configure OVRStudio D1 database binding"
-      if ($LASTEXITCODE -ne 0) { throw "Could not commit the generated D1 binding." }
+      & git diff --quiet -- wrangler.jsonc
+      if ($LASTEXITCODE -ne 0) {
+        & git add -- wrangler.jsonc
+        & git commit --only wrangler.jsonc -m "Configure OVRStudio D1 database binding"
+        if ($LASTEXITCODE -ne 0) { throw "Could not commit the generated D1 binding." }
+      }
       & git push origin $branch
       if ($LASTEXITCODE -ne 0) { throw "Could not push the generated D1 binding. Push the current branch, then rerun the setup script." }
     } else {
