@@ -1,3 +1,10 @@
+interface R2Bucket {
+  put(key: string, value: ReadableStream | ArrayBuffer | string | Blob, options?: {
+    httpMetadata?: { contentType?: string; cacheControl?: string; contentDisposition?: string };
+    customMetadata?: Record<string, string>;
+  }): Promise<unknown>;
+}
+
 interface Env {
   MEDIA_BUCKET: R2Bucket;
   PUBLIC_BASE_URL: string;
