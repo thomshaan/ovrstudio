@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Volume2, VolumeX, Play, Pause, Music, Disc3 } from 'lucide-react';
 import { BackgroundAudioConfig } from '../types';
 import { sound } from '../utils/audio';
+import { resolveAssetUrl } from '../utils/assets';
 
 interface BackgroundMusicPlayerProps {
   config: BackgroundAudioConfig;
@@ -17,6 +18,7 @@ export const BackgroundMusicPlayer: React.FC<BackgroundMusicPlayerProps> = ({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const resolvedAudioUrl = config.audioUrl ? resolveAssetUrl(config.audioUrl) : '';
 
   useEffect(() => {
     if (!audioRef.current) {
@@ -34,13 +36,13 @@ export const BackgroundMusicPlayer: React.FC<BackgroundMusicPlayerProps> = ({
 
     audio.volume = Math.max(0, Math.min(1, config.volume));
 
-    if (config.enabled && audio.paused && config.audioUrl) {
+    if (config.enabled && audio.paused && resolvedAudioUrl) {
       audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     } else if (!config.enabled && !audio.paused) {
       audio.pause();
       setIsPlaying(false);
     }
-  }, [config.audioUrl, config.enabled, config.volume]);
+  }, [resolvedAudioUrl, config.enabled, config.volume]);
 
   const togglePlayback = () => {
     sound.playTick();
