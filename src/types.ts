@@ -85,6 +85,7 @@ export interface BackgroundAudioConfig {
 export interface SiteVisualsConfig {
   tabletImage: string;
   watchReelThumbnail: string;
+  watchReelVideo?: string;
   storyImage: string;
 }
 
