@@ -1,7 +1,7 @@
 export type CmsKey = 'projects' | 'disciplines' | 'team' | 'collaborations' | 'bgAudioConfig' | 'siteVisuals' | 'custom3DModel';
 export type CmsSnapshot = Partial<Record<CmsKey, unknown>> & { initialized?: boolean };
 const TOKEN_KEY = 'ovr_cms_admin_token';
-const API_BASE = (import.meta.env.VITE_CMS_API_BASE as string | undefined)?.trim().replace(/\/$/, '') || '';
+const API_BASE = (import.meta.env.VITE_CMS_API_BASE as string | undefined)?.trim().replace(/\/$/, '') || 'https://ovrstudio.thomassiahaan31.workers.dev';
 function endpoint(path: string) { return `${API_BASE}${path}`; }
 export function getCmsToken(): string {
   try { return sessionStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; }
