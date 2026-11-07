@@ -31,7 +31,7 @@ export interface Project {
   galleryImages?: string[];
   model3D?: {
     name: string;
-    format: 'obj' | 'fbx';
+    format: 'obj' | 'fbx' | 'gltf' | 'glb';
     dataUrlOrPath: string;
   };
   videoPreviewUrl?: string;
@@ -91,7 +91,7 @@ export interface SiteVisualsConfig {
 export interface Custom3DModelConfig {
   id: string;
   name: string;
-  format: 'obj' | 'fbx' | 'gltf';
+  format: 'obj' | 'fbx' | 'gltf' | 'glb';
   dataUrlOrPath: string;
   color?: string;
   wireframe?: boolean;
