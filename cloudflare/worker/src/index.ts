@@ -75,7 +75,7 @@ async function verifyCmsToken(token: string, secret: string): Promise<boolean> {
     );
     if (!valid) return false;
     const claims = JSON.parse(new TextDecoder().decode(decodeBase64Url(payload)));
-    return claims.sub === 'ovr...';
+    return claims.sub === 'ovrstudio-admin' && Number(claims.exp) > Math.floor(Date.now() / 1000);
   } catch {
     return false;
   }
