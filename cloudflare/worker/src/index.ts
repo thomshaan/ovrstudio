@@ -176,7 +176,7 @@ export default {
     if (!ALLOWED_TYPES.has(contentType)) return json({ error: `File type is not allowed: ${contentType}` }, 415, headers);
     if (contentType === 'image/svg+xml') {
       const svg = await file.text();
-      if (/<script\\b|on\\w+\\s*=|javascript:/i.test(svg)) return json({ error: 'SVG contains potentially unsafe active content.' }, 415, headers);
+      if (/<script\b|on\w+\s*=|javascript:/i.test(svg)) return json({ error: 'SVG contains potentially unsafe active content.' }, 415, headers);
     }
 
     const category = contentType.startsWith('image/') ? 'images'
