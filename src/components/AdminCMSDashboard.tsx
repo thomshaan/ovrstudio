@@ -935,7 +935,7 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                   Studio 3D Model Lab &amp; Upload
                 </h1>
                 <p className="text-sm text-slate-400">
-                  Upload your own 3D models (.OBJ, .FBX meshes) so clients and visitors can rotate, zoom, and inspect your 3D assets in real-time WebGL.
+                  Upload OBJ, FBX, GLTF, or GLB models so clients and visitors can rotate, zoom, and inspect your 3D assets in real-time WebGL.
                 </p>
               </div>
 
