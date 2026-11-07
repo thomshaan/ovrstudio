@@ -38,3 +38,11 @@ After that, CMS edits publish to D1 immediately. Other open clients refresh the 
 - Do not commit `.cms-admin-password.txt` or `.cms-jwt-secret.txt`; both are ignored by Git.
 - Keep the existing R2 bucket and public URL unchanged.
 - This script deploys directly with Wrangler. If Workers Builds are also enabled for the main Worker, merge the feature branch into the configured build branch after setup so future source-controlled builds include the same Worker entry point and D1 binding.
+
+## R2 media delivery
+
+The existing `ovrstudio` R2 bucket remains unchanged. The media Worker now serves uploaded objects through its public `/media/<object-key>` route as well as accepting uploads at `/upload`. This route preserves the object's content type, supports browser byte-range requests for video playback, and returns CORS headers for the configured site origins.
+
+New uploads save the Worker media URL in the CMS. Older records containing the public `pub-fffb5bb212294005837d690a745535a1.r2.dev` URL are automatically normalized by the frontend to the same media route, so existing R2 objects do not need to be uploaded again.
+
+`VITE_R2_UPLOAD_ENDPOINT` should be the base URL of the existing `ovrstudio-media-upload` Worker (without `/upload`). `VITE_CMS_API_BASE` is optional; when unset, the frontend uses the `ovrstudio` CMS Worker URL so GitHub Pages deployments still publish to D1.
