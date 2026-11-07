@@ -32,7 +32,7 @@ const ALLOWED_TYPES = new Set([
   'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml',
   'video/mp4', 'video/webm', 'video/ogg',
   'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/webm',
-  'text/plain', 'application/octet-stream', 'model/gltf+json', 'model/gltf-binary',
+  'text/plain', 'application/json', 'application/octet-stream', 'model/gltf+json', 'model/gltf-binary',
 ]);
 
 function corsHeaders(request: Request, env: Env): Headers {
