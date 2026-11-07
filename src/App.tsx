@@ -43,6 +43,7 @@ const DEFAULT_BG_AUDIO: BackgroundAudioConfig = {
 const DEFAULT_SITE_VISUALS: SiteVisualsConfig = {
   tabletImage: 'assets/images/ovr_game_unity_1793175840681.jpg',
   watchReelThumbnail: 'assets/images/ovr_art_2d_1793175838956.jpg',
+  watchReelVideo: '',
   storyImage: 'assets/images/ovr_story_studio_life_1793177350433.jpg',
 };
 
@@ -324,6 +325,7 @@ export default function App() {
         <WatchReelBanner
           onExploreProjects={() => handleNavigate('projects')}
           thumbnailImage={siteVisuals.watchReelThumbnail}
+          videoUrl={siteVisuals.watchReelVideo}
         />
 
         {/* 4. Filterable Works & Short Videos (Cards accommodating video playback) */}
