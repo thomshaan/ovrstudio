@@ -5,6 +5,7 @@ import { RotateCw, ZoomIn, ZoomOut, Eye, Upload, Box, Check, Sparkles, Layers } 
 import { parse3DModel, createPreset3DModel } from '../utils/model3DLoader';
 import { sound } from '../utils/audio';
 import { uploadFileToR2 } from '../utils/mediaUpload';
+import { resolveAssetUrl } from '../utils/assets';
 
 interface Model3DViewerProps {
   initialPreset?: 'marine-drone' | 'crystal-relic' | 'mecha-helmet';
@@ -86,13 +87,24 @@ export const Model3DViewer: React.FC<Model3DViewerProps> = ({
     if (customObjContent) {
       const loadCustomModel = async () => {
         try {
-          const modelContent = /^https?:\/\//i.test(customObjContent)
-            ? await fetch(customObjContent).then((response) => {
-                if (!response.ok) throw new Error('Could not download the saved 3D model from R2.');
-                return response.text();
-              })
-            : customObjContent;
-          const res = await parse3DModel(modelContent, customModelName || 'model.obj');
+          const resolvedUrl = resolveAssetUrl(customObjContent);
+          const isRemoteAsset = /^(https?:|blob:|data:)/i.test(resolvedUrl);
+          let modelContent: string | ArrayBuffer = customObjContent;
+          let resourcePath = '';
+          let modelFilename = customModelName || 'model.obj';
+
+          if (isRemoteAsset) {
+            const response = await fetch(resolvedUrl);
+            if (!response.ok) throw new Error(`Could not download the saved 3D model from storage (${response.status}).`);
+            const urlFilename = resolvedUrl.split(/[?#]/)[0].split('/').pop() || 'model.obj';
+            if (!/\.(obj|fbx|gltf|glb)$/i.test(modelFilename)) modelFilename = urlFilename;
+            modelContent = /\.obj$/i.test(modelFilename)
+              ? await response.text()
+              : await response.arrayBuffer();
+            try { resourcePath = new URL('.', resolvedUrl).href; } catch { resourcePath = ''; }
+          }
+
+          const res = await parse3DModel(modelContent, modelFilename, resourcePath);
           modelGroup.clear();
           modelGroup.add(res.object);
           setStats({ vertices: res.vertexCount, triangles: res.triangleCount });
@@ -225,14 +237,14 @@ export const Model3DViewer: React.FC<Model3DViewerProps> = ({
     setLoadingError(null);
 
     const ext = file.name.split('.').pop()?.toLowerCase();
-    if (ext !== 'obj' && ext !== 'fbx') {
-      setLoadingError('Please upload a .OBJ 3D file for direct WebGL rendering (FBX binary is converted via standard OBJ exports from Blender/Maya).');
+    if (!ext || !['obj', 'fbx', 'gltf', 'glb'].includes(ext)) {
+      setLoadingError('Unsupported format. Upload an OBJ, FBX, GLTF, or GLB model.');
       return;
     }
 
     try {
-      const text = await file.text();
-      const res = await parse3DModel(text, file.name);
+      const fileContent = ext === 'obj' ? await file.text() : await file.arrayBuffer();
+      const res = await parse3DModel(fileContent, file.name);
       const uploaded = await uploadFileToR2(file);
 
       if (modelHolderRef.current) {
@@ -283,7 +295,7 @@ export const Model3DViewer: React.FC<Model3DViewerProps> = ({
             <input
               ref={fileInputRef}
               type="file"
-              accept=".obj,.fbx"
+              accept=".obj,.fbx,.gltf,.glb"
               onChange={handleFileUpload}
               className="hidden"
             />
@@ -292,7 +304,7 @@ export const Model3DViewer: React.FC<Model3DViewerProps> = ({
               className="group relative overflow-hidden px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-md"
             >
               <Upload className="w-3.5 h-3.5 text-white" />
-              <span>Upload 3D File (.OBJ)</span>
+              <span>Upload 3D File</span>
             </button>
           </div>
         )}
