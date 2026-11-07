@@ -207,7 +207,7 @@ export const ProjectMediaPreview: React.FC<ProjectMediaPreviewProps> = ({
       {videoPreviewUrl ? (
         <video
           ref={videoRef}
-          src={videoPreviewUrl}
+          src={resolveAssetUrl(videoPreviewUrl)}
           playsInline
           muted={isMuted}
           onTimeUpdate={(e) => {
