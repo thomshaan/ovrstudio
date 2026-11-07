@@ -21,7 +21,7 @@ const LEGACY_PATH_MAP: Record<string, string> = {
 
 export const DEFAULT_FALLBACK_IMAGE = 'assets/images/ovr_art_2d_1793175838956.jpg';
 const R2_PUBLIC_HOST = 'pub-fffb5bb212294005837d690a745535a1.r2.dev';
-const R2_MEDIA_WORKER = ((import.meta.env.VITE_R2_UPLOAD_ENDPOINT as string | undefined)?.trim().replace(/\\/$/, '') || 'https://ovrstudio-media-upload.thomassiahaan31.workers.dev');
+const R2_MEDIA_WORKER = ((import.meta.env.VITE_R2_UPLOAD_ENDPOINT as string | undefined)?.trim().replace(/\/$/, '') || 'https://ovrstudio-media-upload.thomassiahaan31.workers.dev');
 
 export function resolveAssetUrl(path: string | undefined | null): string {
   if (!path || typeof path !== 'string') {
