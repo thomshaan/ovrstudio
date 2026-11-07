@@ -884,6 +884,22 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                     presetOptions={PRESET_IMAGES}
                     recommendedNotice="Displayed when visitors click the 'WATCH STUDIO TRAILER' banner."
                   />
+
+                  <div className="pt-4">
+                    <CMSMediaUploader
+                      label="Actual Studio Showreel Video (MP4/WebM)"
+                      mediaType="video"
+                      currentUrl={siteVisuals.watchReelVideo || ''}
+                      onMediaSelect={(url) => {
+                        onUpdateSiteVisuals({
+                          ...siteVisuals,
+                          watchReelVideo: url,
+                        });
+                        showToast('Studio showreel video updated');
+                      }}
+                      recommendedNotice="Upload the actual trailer video. It will play in the showreel modal; the thumbnail remains its poster."
+                    />
+                  </div>
                 </div>
 
                 {/* 3. Our Story Inside the Studio Image */}
