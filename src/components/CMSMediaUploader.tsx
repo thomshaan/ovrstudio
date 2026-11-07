@@ -195,7 +195,7 @@ export const CMSMediaUploader: React.FC<CMSMediaUploaderProps> = ({
           {mediaType === 'video' && (
             <div className="relative w-full aspect-video bg-black/60 rounded-xl overflow-hidden border border-white/10">
               <video
-                src={currentUrl}
+                src={resolveAssetUrl(currentUrl)}
                 controls
                 muted
                 className="w-full h-full object-cover"
