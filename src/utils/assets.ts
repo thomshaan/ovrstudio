@@ -39,7 +39,7 @@ export function resolveAssetUrl(path: string | undefined | null): string {
     try {
       const url = new URL(trimmed);
       if (url.hostname === R2_PUBLIC_HOST) {
-        const key = url.pathname.replace(/^\\/+/, '').split('/').map(encodeURIComponent).join('/');
+        const key = url.pathname.replace(/^\/+/, '').split('/').map(encodeURIComponent).join('/');
         return `${R2_MEDIA_WORKER}/media/${key}${url.search}`;
       }
     } catch {
