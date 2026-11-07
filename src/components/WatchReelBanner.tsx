@@ -6,9 +6,10 @@ import { resolveAssetUrl } from '../utils/assets';
 interface WatchReelBannerProps {
   onExploreProjects: () => void;
   thumbnailImage?: string;
+  videoUrl?: string;
 }
 
-export const WatchReelBanner: React.FC<WatchReelBannerProps> = ({ onExploreProjects, thumbnailImage }) => {
+export const WatchReelBanner: React.FC<WatchReelBannerProps> = ({ onExploreProjects, thumbnailImage, videoUrl }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [muted, setMuted] = useState(true);
 
@@ -74,11 +75,24 @@ export const WatchReelBanner: React.FC<WatchReelBannerProps> = ({ onExploreProje
 
             {/* Video preview area */}
             <div className="relative w-full aspect-16/9 bg-black overflow-hidden flex items-center justify-center">
-              <img
-                src={resolveAssetUrl(thumbnailImage || 'assets/images/ovr_art_2d_1793175838956.jpg')}
-                alt="Studio Reel"
-                className="w-full h-full object-cover"
-              />
+              {videoUrl ? (
+                <video
+                  src={resolveAssetUrl(videoUrl)}
+                  poster={resolveAssetUrl(thumbnailImage || 'assets/images/ovr_art_2d_1793175838956.jpg')}
+                  autoPlay
+                  loop
+                  playsInline
+                  controls
+                  muted={muted}
+                  className="w-full h-full object-contain bg-black"
+                />
+              ) : (
+                <img
+                  src={resolveAssetUrl(thumbnailImage || 'assets/images/ovr_art_2d_1793175838956.jpg')}
+                  alt="Studio Reel thumbnail"
+                  className="w-full h-full object-cover"
+                />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30" />
               
               <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between text-white text-xs sm:text-sm font-medium">

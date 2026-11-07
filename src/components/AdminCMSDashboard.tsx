@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Project, DisciplineItem, TeamMember, CollaborationItem, BackgroundAudioConfig, ProjectCategory } from '../types';
 import { PROJECTS as DEFAULT_PROJECTS } from '../data/projects';
 import { DEFAULT_DISCIPLINES } from '../data/disciplines';
@@ -9,6 +9,7 @@ import { CMSMediaUploader } from './CMSMediaUploader';
 import { Model3DViewer } from './Model3DViewer';
 import { PRESET_AUDIO_TRACKS, uploadFileToR2 } from '../utils/mediaUpload';
 import { resolveAssetUrl } from '../utils/assets';
+import { clearCmsToken, getCmsToken, loginToCms, verifyCmsSession } from '../utils/cmsSync';
 import {
   Lock,
   Plus,
@@ -56,10 +57,8 @@ interface AdminCMSDashboardProps {
   onUpdateBgAudioConfig: (config: BackgroundAudioConfig) => void;
   onUpdateSiteVisuals: (visuals: import('../types').SiteVisualsConfig) => void;
   onUpdateCustom3DModel: (model: import('../types').Custom3DModelConfig) => void;
+  onAdminAuthenticated: () => Promise<void>;
 }
-
-
-const MASTER_PASSWORD = 'ovr2026';
 
 const PRESET_IMAGES = [
   { label: '3D Character Art', url: 'assets/images/ovr_art_2d_1793175838956.jpg' },
@@ -89,14 +88,9 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
   onUpdateBgAudioConfig,
   onUpdateSiteVisuals,
   onUpdateCustom3DModel,
+  onAdminAuthenticated,
 }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    try {
-      return sessionStorage.getItem('ovr_admin_unlocked') === 'true';
-    } catch {
-      return false;
-    }
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!getCmsToken());
 
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState('');
@@ -122,34 +116,47 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    setTimeout(() => setToastMessage(null), 4500);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let active = true;
+    void verifyCmsSession().then((valid) => {
+      if (active && !valid) setIsAuthenticated(false);
+    });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    const handleSyncError = (event: Event) => {
+      const detail = (event as CustomEvent<string>).detail;
+      showToast(detail || 'Cloud publishing failed. Please sign in again.');
+    };
+    window.addEventListener('ovr-cms-sync-error', handleSyncError);
+    return () => window.removeEventListener('ovr-cms-sync-error', handleSyncError);
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput.trim() === MASTER_PASSWORD) {
+    setAuthError('');
+    try {
+      await loginToCms(passwordInput);
+      await onAdminAuthenticated();
       sound.playChime(750, 0.2);
       setIsAuthenticated(true);
-      try {
-        sessionStorage.setItem('ovr_admin_unlocked', 'true');
-      } catch {
-        // ignore
-      }
-      setAuthError('');
-    } else {
+      setPasswordInput('');
+    } catch (error) {
+      clearCmsToken();
       sound.playTick();
-      setAuthError('Incorrect studio password. Please try again.');
+      setAuthError(error instanceof Error ? error.message : 'Could not authenticate with the CMS.');
     }
   };
 
   const handleLogout = () => {
     sound.playTick();
+    clearCmsToken();
     setIsAuthenticated(false);
-    try {
-      sessionStorage.removeItem('ovr_admin_unlocked');
-    } catch {
-      // ignore
-    }
   };
 
   if (!isOpen) return null;
@@ -207,7 +214,7 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
           </form>
 
           <div className="mt-6 pt-6 border-t border-slate-100 text-xs text-slate-500">
-            Hint for studio team: Default password is <code className="bg-slate-100 text-orange-700 px-2 py-0.5 rounded font-mono font-bold">ovr2026</code>
+            Secure server-side authentication · Session expires after 12 hours
           </div>
         </div>
       </div>
@@ -250,7 +257,7 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
         <div className="flex items-center gap-3">
           <div className="hidden md:flex items-center gap-2 text-xs text-slate-300">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Live Local Sync Active</span>
+            <span>Cloud CMS Sync Active</span>
           </div>
 
           <button
@@ -440,7 +447,7 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
 
           <div className="pt-4 border-t border-white/10 text-[11px] text-slate-400">
             <div>OVRStudio Engine v2.4</div>
-            <div className="text-slate-500">Live Client Sync</div>
+            <div className="text-slate-500">D1 Cloud Publishing</div>
           </div>
         </aside>
 
@@ -877,6 +884,22 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                     presetOptions={PRESET_IMAGES}
                     recommendedNotice="Displayed when visitors click the 'WATCH STUDIO TRAILER' banner."
                   />
+
+                  <div className="pt-4">
+                    <CMSMediaUploader
+                      label="Actual Studio Showreel Video (MP4/WebM)"
+                      mediaType="video"
+                      currentUrl={siteVisuals.watchReelVideo || ''}
+                      onMediaSelect={(url) => {
+                        onUpdateSiteVisuals({
+                          ...siteVisuals,
+                          watchReelVideo: url,
+                        });
+                        showToast('Studio showreel video updated');
+                      }}
+                      recommendedNotice="Upload the actual trailer video. It will play in the showreel modal; the thumbnail remains its poster."
+                    />
+                  </div>
                 </div>
 
                 {/* 3. Our Story Inside the Studio Image */}
@@ -912,7 +935,7 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                   Studio 3D Model Lab &amp; Upload
                 </h1>
                 <p className="text-sm text-slate-400">
-                  Upload your own 3D models (.OBJ, .FBX meshes) so clients and visitors can rotate, zoom, and inspect your 3D assets in real-time WebGL.
+                  Upload OBJ, FBX, GLTF, or GLB models so clients and visitors can rotate, zoom, and inspect your 3D assets in real-time WebGL.
                 </p>
               </div>
 
@@ -926,6 +949,7 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                       ...custom3DModel,
                       name: filename,
                       dataUrlOrPath: content,
+                      format: (filename.split('.').pop()?.toLowerCase() || 'obj') as 'obj' | 'fbx' | 'gltf' | 'glb',
                     });
                     showToast(`Uploaded and rendered 3D model: ${filename}`);
                   }}
@@ -939,7 +963,7 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                   </div>
                   <ul className="list-disc list-inside space-y-1 text-slate-400">
                     <li><strong className="text-slate-200">Interactive Turntable:</strong> Click and drag to inspect in 360°, scroll mouse wheel or pinch to zoom.</li>
-                    <li><strong className="text-slate-200">Supported Formats:</strong> Standard <code className="text-orange-300">.obj</code> 3D meshes (exportable from Blender, Maya, 3ds Max, ZBrush).</li>
+                    <li><strong className="text-slate-200">Supported Formats:</strong> OBJ, FBX, GLTF, and GLB 3D meshes.</li>
                     <li><strong className="text-slate-200">PBR Studio Lighting:</strong> Rendered with physical materials, studio softboxes, and real-time reflections.</li>
                     <li><strong className="text-slate-200">Wireframe Mode:</strong> Click the topology button to inspect clean quad/triangle polygon edge flow.</li>
                   </ul>
@@ -1072,7 +1096,7 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
               <div className="bg-[#0b1d3a] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-4">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                   <Cloud className="w-5 h-5 text-orange-400" />
-                  <span>How Media Storage Works</span>
+                  <span>Cloudflare Storage &amp; Live CMS Sync</span>
                 </h3>
                 
                 <div className="space-y-3 text-sm text-slate-300 leading-relaxed">
@@ -1082,13 +1106,18 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                   </p>
 
                   <p>
-                    <strong>2. Upload security:</strong><br />
+                    <strong>2. Cloudflare D1 CMS:</strong><br />
+                    Projects, disciplines, team members, collaborations, background audio, site visuals, and the custom 3D model URL are stored centrally in D1. Admin changes publish immediately, and open websites refresh shared content every five seconds.
+                  </p>
+
+                  <p>
+                    <strong>3. Upload security:</strong><br />
                     Uploads require the private Worker token and are validated server-side. Keep the token private; it is requested when you upload and retained only for the current browser tab session.
                   </p>
                   
                   <ul className="list-disc list-inside space-y-1.5 pl-2 text-xs text-slate-300">
                     <li><strong className="text-white">Public delivery:</strong> Media URLs use your configured Cloudflare R2 public domain.</li>
-                    <li><strong className="text-white">Cross-device use:</strong> Public URLs can be loaded by every visitor; CMS metadata still remains in the browser's localStorage.</li>
+                    <li><strong className="text-white">Cross-device use:</strong> Public URLs can be loaded by every visitor; CMS content is synchronized through Cloudflare D1. LocalStorage is retained as a browser cache and one-time migration source.</li>
                   </ul>
                 </div>
 
@@ -1103,6 +1132,8 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                         team,
                         collaborations,
                         bgAudioConfig,
+                        siteVisuals,
+                        custom3DModel,
                         exportedAt: new Date().toISOString(),
                       };
                       const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -1139,6 +1170,8 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                             if (data.team) onUpdateTeam(data.team);
                             if (data.collaborations) onUpdateCollaborations(data.collaborations);
                             if (data.bgAudioConfig) onUpdateBgAudioConfig(data.bgAudioConfig);
+                            if (data.siteVisuals) onUpdateSiteVisuals(data.siteVisuals);
+                            if (data.custom3DModel) onUpdateCustom3DModel(data.custom3DModel);
                             showToast('Content restored from backup successfully!');
                           } catch {
                             alert('Invalid JSON file format.');
@@ -1300,6 +1333,7 @@ const ProjectEditorModal: React.FC<ProjectEditorModalProps> = ({
   // 3D Model state for this project
   const [has3D, setHas3D] = useState<boolean>(Boolean(project?.model3D));
   const [model3DName, setModel3DName] = useState<string>(project?.model3D?.name || 'Project 3D Model');
+  const [model3DFormat, setModel3DFormat] = useState<'obj' | 'fbx' | 'gltf' | 'glb'>(project?.model3D?.format || 'obj');
   const [model3DData, setModel3DData] = useState<string>(project?.model3D?.dataUrlOrPath || '');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1330,7 +1364,7 @@ const ProjectEditorModal: React.FC<ProjectEditorModalProps> = ({
       galleryImages: galleryImages.length > 0 ? galleryImages : undefined,
       model3D: has3D ? {
         name: model3DName,
-        format: 'obj',
+        format: model3DFormat,
         dataUrlOrPath: model3DData,
       } : undefined,
       videoPreviewUrl: videoPreviewUrl || undefined,
@@ -1528,7 +1562,7 @@ const ProjectEditorModal: React.FC<ProjectEditorModalProps> = ({
               <div>
                 <div className="text-xs font-bold text-white flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-orange-400" />
-                  <span>Interactive 3D Model Attachment (.OBJ)</span>
+                  <span>Interactive 3D Model Attachment (OBJ / FBX / GLTF / GLB)</span>
                 </div>
                 <div className="text-[11px] text-slate-400">
                   Attach a 3D model so clients can interactively rotate and inspect this project in 3D.
@@ -1567,10 +1601,10 @@ const ProjectEditorModal: React.FC<ProjectEditorModalProps> = ({
                 <div className="flex items-center gap-3">
                   <label className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md">
                     <Upload className="w-3.5 h-3.5 text-white" />
-                    <span>Upload 3D File (.OBJ)</span>
+                    <span>Upload 3D File</span>
                     <input
                       type="file"
-                      accept=".obj"
+                      accept=".obj,.fbx,.gltf,.glb"
                       className="hidden"
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
@@ -1580,6 +1614,7 @@ const ProjectEditorModal: React.FC<ProjectEditorModalProps> = ({
                           const uploaded = await uploadFileToR2(file);
                           setModel3DData(uploaded.url);
                           setModel3DName(file.name);
+                          setModel3DFormat((file.name.split('.').pop()?.toLowerCase() || 'obj') as 'obj' | 'fbx' | 'gltf' | 'glb');
                           sound.playChime(750, 0.15);
                         } catch {
                           alert('Failed to upload 3D file');
@@ -1591,7 +1626,7 @@ const ProjectEditorModal: React.FC<ProjectEditorModalProps> = ({
                   {model3DData ? (
                     <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
                       <Check className="w-3.5 h-3.5" />
-                      <span>Custom .OBJ stored in R2</span>
+                      <span>Custom {model3DFormat.toUpperCase()} stored in R2</span>
                     </span>
                   ) : (
                     <span className="text-xs text-slate-400">

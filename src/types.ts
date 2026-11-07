@@ -31,7 +31,7 @@ export interface Project {
   galleryImages?: string[];
   model3D?: {
     name: string;
-    format: 'obj' | 'fbx';
+    format: 'obj' | 'fbx' | 'gltf' | 'glb';
     dataUrlOrPath: string;
   };
   videoPreviewUrl?: string;
@@ -85,13 +85,14 @@ export interface BackgroundAudioConfig {
 export interface SiteVisualsConfig {
   tabletImage: string;
   watchReelThumbnail: string;
+  watchReelVideo?: string;
   storyImage: string;
 }
 
 export interface Custom3DModelConfig {
   id: string;
   name: string;
-  format: 'obj' | 'fbx' | 'gltf';
+  format: 'obj' | 'fbx' | 'gltf' | 'glb';
   dataUrlOrPath: string;
   color?: string;
   wireframe?: boolean;

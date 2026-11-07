@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Upload, X, Film, Image as ImageIcon, Music, Check, AlertCircle } from 'lucide-react';
 import { uploadFileToR2 } from '../utils/mediaUpload';
 import { sound } from '../utils/audio';
@@ -25,6 +25,10 @@ export const CMSMediaUploader: React.FC<CMSMediaUploaderProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [customUrlInput, setCustomUrlInput] = useState(currentUrl);
+
+  useEffect(() => {
+    setCustomUrlInput(currentUrl);
+  }, [currentUrl]);
 
   const acceptTypes = {
     image: 'image/jpeg,image/png,image/webp,image/gif,image/svg+xml',
@@ -191,7 +195,7 @@ export const CMSMediaUploader: React.FC<CMSMediaUploaderProps> = ({
           {mediaType === 'video' && (
             <div className="relative w-full aspect-video bg-black/60 rounded-xl overflow-hidden border border-white/10">
               <video
-                src={currentUrl}
+                src={resolveAssetUrl(currentUrl)}
                 controls
                 muted
                 className="w-full h-full object-cover"
@@ -201,7 +205,7 @@ export const CMSMediaUploader: React.FC<CMSMediaUploaderProps> = ({
 
           {mediaType === 'audio' && (
             <div className="p-2 bg-black/40 rounded-xl border border-white/10">
-              <audio src={currentUrl} controls className="w-full h-8" />
+              <audio src={resolveAssetUrl(currentUrl)} controls className="w-full h-8" />
             </div>
           )}
         </div>

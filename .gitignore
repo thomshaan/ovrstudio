@@ -8,3 +8,5 @@ coverage/
 !.env.example
 
 privateuploadtoken.txt
+.cms-admin-password.txt
+.cms-jwt-secret.txt
