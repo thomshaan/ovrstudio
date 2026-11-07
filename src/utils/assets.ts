@@ -20,6 +20,8 @@ const LEGACY_PATH_MAP: Record<string, string> = {
 };
 
 export const DEFAULT_FALLBACK_IMAGE = 'assets/images/ovr_art_2d_1793175838956.jpg';
+const R2_PUBLIC_HOST = 'pub-fffb5bb212294005837d690a745535a1.r2.dev';
+const R2_MEDIA_WORKER = 'https://ovrstudio-media-upload.thomassiahaan31.workers.dev';
 
 export function resolveAssetUrl(path: string | undefined | null): string {
   if (!path || typeof path !== 'string') {
@@ -31,15 +33,23 @@ export function resolveAssetUrl(path: string | undefined | null): string {
     return resolveAssetUrl(DEFAULT_FALLBACK_IMAGE);
   }
 
-  // Data URLs, Blob URLs and full HTTP(S) links pass through untouched
-  if (
-    trimmed.startsWith('data:') ||
-    trimmed.startsWith('blob:') ||
-    trimmed.startsWith('http://') ||
-    trimmed.startsWith('https://')
-  ) {
+  // Convert legacy public R2 URLs to the media Worker. This keeps old CMS records
+  // working while giving images, videos, audio, and 3D fetches consistent CORS/MIME delivery.
+  if (trimmed.startsWith('https://') || trimmed.startsWith('http://')) {
+    try {
+      const url = new URL(trimmed);
+      if (url.hostname === R2_PUBLIC_HOST) {
+        const key = url.pathname.replace(/^\\/+/, '').split('/').map(encodeURIComponent).join('/');
+        return `${R2_MEDIA_WORKER}/media/${key}${url.search}`;
+      }
+    } catch {
+      // Preserve malformed external URLs so the browser can report the actual loading error.
+    }
     return trimmed;
   }
+
+  // Data URLs and Blob URLs are local browser resources and pass through unchanged.
+  if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) return trimmed;
 
   // Strip leading slashes and relative markers
   let clean = trimmed.replace(/^(\.\/|\/)+/, '');
