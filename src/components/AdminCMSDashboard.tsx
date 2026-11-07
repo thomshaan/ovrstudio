@@ -933,6 +933,7 @@ export const AdminCMSDashboard: React.FC<AdminCMSDashboardProps> = ({
                       ...custom3DModel,
                       name: filename,
                       dataUrlOrPath: content,
+                      format: (filename.split('.').pop()?.toLowerCase() || 'obj') as 'obj' | 'fbx' | 'gltf' | 'glb',
                     });
                     showToast(`Uploaded and rendered 3D model: ${filename}`);
                   }}
@@ -1347,7 +1348,7 @@ const ProjectEditorModal: React.FC<ProjectEditorModalProps> = ({
       galleryImages: galleryImages.length > 0 ? galleryImages : undefined,
       model3D: has3D ? {
         name: model3DName,
-        format: 'obj',
+        format: model3DFormat,
         dataUrlOrPath: model3DData,
       } : undefined,
       videoPreviewUrl: videoPreviewUrl || undefined,
@@ -1597,6 +1598,7 @@ const ProjectEditorModal: React.FC<ProjectEditorModalProps> = ({
                           const uploaded = await uploadFileToR2(file);
                           setModel3DData(uploaded.url);
                           setModel3DName(file.name);
+                          setModel3DFormat((file.name.split('.').pop()?.toLowerCase() || 'obj') as 'obj' | 'fbx' | 'gltf' | 'glb');
                           sound.playChime(750, 0.15);
                         } catch {
                           alert('Failed to upload 3D file');
