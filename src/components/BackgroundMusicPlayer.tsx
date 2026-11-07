@@ -27,8 +27,8 @@ export const BackgroundMusicPlayer: React.FC<BackgroundMusicPlayerProps> = ({
     }
 
     const audio = audioRef.current;
-    if (config.audioUrl && audio.src !== config.audioUrl) {
-      audio.src = config.audioUrl;
+    if (resolvedAudioUrl && audio.src !== resolvedAudioUrl) {
+      audio.src = resolvedAudioUrl;
       if (config.enabled) {
         audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
       }
